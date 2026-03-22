@@ -1,0 +1,61 @@
+{
+  "name": "prompt-defense-audit",
+  "version": "1.0.0",
+  "description": "Deterministic LLM prompt defense scanner — 12 attack vectors, pure regex, zero AI cost, < 5ms",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "prompt-defense-audit": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "README.zh-TW.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "node --import tsx test/scanner.test.ts",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "prompt-injection",
+    "llm-security",
+    "ai-safety",
+    "prompt-defense",
+    "system-prompt",
+    "owasp-llm",
+    "chatgpt",
+    "claude",
+    "gemini",
+    "security-audit",
+    "prompt-engineering",
+    "ai-security"
+  ],
+  "author": "Ultra Lab <dev@ultralab.tw> (https://ultralab.tw)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ppcvote/prompt-defense-audit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ppcvote/prompt-defense-audit/issues"
+  },
+  "homepage": "https://github.com/ppcvote/prompt-defense-audit#readme",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
