@@ -30,6 +30,8 @@ Existing security tools require LLM calls (expensive, non-deterministic) or clou
 
 ```bash
 npm install prompt-defense-audit
+# or install directly from GitHub
+npm install ppcvote/prompt-defense-audit
 ```
 
 ## Usage

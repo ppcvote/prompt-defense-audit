@@ -30,6 +30,8 @@ OWASP 將**提示詞注入**列為 [LLM 應用的 #1 威脅](https://owasp.org/w
 
 ```bash
 npm install prompt-defense-audit
+# 或從 GitHub 安裝
+npm install ppcvote/prompt-defense-audit
 ```
 
 ## 使用方式
