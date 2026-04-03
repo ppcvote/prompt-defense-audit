@@ -26,6 +26,8 @@ OWASP lists **Prompt Injection** as the [#1 threat to LLM applications](https://
 
 Existing security tools require LLM calls (expensive, non-deterministic) or cloud services (privacy concerns). This package runs **locally, instantly, for free**.
 
+**Our philosophy:** The deterministic engine is the product. AI deep analysis is optional — because regex is already strong enough for 90%+ of use cases. Zero AI cost by default.
+
 ## Install
 
 ```bash
