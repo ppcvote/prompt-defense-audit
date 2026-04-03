@@ -202,8 +202,19 @@ PRs welcome. Key areas:
 
 MIT — Ultra Lab (https://ultralab.tw)
 
+## Used In Production
+
+This library powers the **Prompt Security** mode of [UltraProbe](https://ultralab.tw/probe) — a free, open-source scanner used by 7,500+ monthly users across 23 countries.
+
+UltraProbe has two core scan modes:
+- **Website Scan** — SEO + AEO combined into an AI Visibility Score ([ultralab-scanners](https://github.com/ppcvote/ultralab-scanners))
+- **Prompt Security** — This library. 12 attack vectors in < 5ms.
+
+**Contributing to:** [NVIDIA garak](https://github.com/NVIDIA/garak/issues/1666) · [Cisco AI Defense](https://github.com/cisco-ai-defense/skill-scanner/issues/81) · [OWASP LLM Top 10](https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/pull/816)
+
 ## Related
 
 - [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
-- [UltraProbe](https://ultralab.tw/probe) — Free AI security scanner (uses this library)
+- [UltraProbe](https://ultralab.tw/probe) — Free AI security scanner (Website Scan + Prompt Security)
+- [ultralab-scanners](https://github.com/ppcvote/ultralab-scanners) — SEO + AEO scanners (the other half of UltraProbe)
 - [Prompt Injection Primer](https://github.com/jthack/PIPE) — Background research
