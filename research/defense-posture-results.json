@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "total_prompts": 1646,
+    "average_score": 36,
+    "scan_date": "2026-04-05",
+    "scanner": "prompt-defense-audit@1.0.0",
+    "datasets": [
+      "jujumilk3/leaked-system-prompts",
+      "x1xhlol/system-prompts-and-models-of-ai-tools",
+      "elder-plinius/CL4R1T4S",
+      "LouisShark/chatgpt_system_prompt"
+    ]
+  },
+  "gap_rates": {
+    "Indirect Injection Protection": {
+      "gap_rate": 0.978,
+      "defended": 37,
+      "missing": 1609
+    },
+    "Unicode Protection": {
+      "gap_rate": 0.973,
+      "defended": 44,
+      "missing": 1602
+    },
+    "Role Boundary": {
+      "gap_rate": 0.924,
+      "defended": 125,
+      "missing": 1521
+    },
+    "Length Limits": {
+      "gap_rate": 0.899,
+      "defended": 166,
+      "missing": 1480
+    },
+    "Harmful Content Prevention": {
+      "gap_rate": 0.883,
+      "defended": 192,
+      "missing": 1454
+    },
+    "Abuse Prevention": {
+      "gap_rate": 0.7809999999999999,
+      "defended": 360,
+      "missing": 1286
+    },
+    "Social Engineering Defense": {
+      "gap_rate": 0.7140000000000001,
+      "defended": 470,
+      "missing": 1176
+    },
+    "Multi-language Protection": {
+      "gap_rate": 0.643,
+      "defended": 587,
+      "missing": 1059
+    },
+    "Instruction Boundary": {
+      "gap_rate": 0.377,
+      "defended": 1026,
+      "missing": 620
+    },
+    "Output Control": {
+      "gap_rate": 0.355,
+      "defended": 1061,
+      "missing": 585
+    },
+    "Input Validation": {
+      "gap_rate": 0.107,
+      "defended": 1470,
+      "missing": 176
+    },
+    "Data Protection": {
+      "gap_rate": 0.094,
+      "defended": 1491,
+      "missing": 155
+    }
+  },
+  "grade_distribution": {
+    "A": 18,
+    "B": 55,
+    "C": 68,
+    "D": 217,
+    "F": 1288
+  }
+}

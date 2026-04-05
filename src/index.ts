@@ -20,12 +20,12 @@
  * @see https://github.com/ppcvote/prompt-defense-audit
  */
 
-export { audit, auditWithDetails } from './scanner'
-export { ATTACK_VECTORS } from './vectors'
+export { audit, auditWithDetails } from './scanner.js'
+export { ATTACK_VECTORS } from './vectors.js'
 export type {
   AuditResult,
   AuditDetailedResult,
   DefenseCheck,
   AttackVector,
   Grade,
-} from './types'
+} from './types.js'

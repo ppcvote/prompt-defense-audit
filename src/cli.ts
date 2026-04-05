@@ -12,8 +12,8 @@
  */
 
 import { readFileSync } from 'fs'
-import { auditWithDetails } from './scanner'
-import { ATTACK_VECTORS } from './vectors'
+import { auditWithDetails } from './scanner.js'
+import { ATTACK_VECTORS } from './vectors.js'
 
 const args = process.argv.slice(2)
 

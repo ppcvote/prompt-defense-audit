@@ -4,7 +4,7 @@ import type {
   DefenseCheck,
   DefenseRule,
   Grade,
-} from './types'
+} from './types.js'
 
 const DEFENSE_RULES: DefenseRule[] = [
   {

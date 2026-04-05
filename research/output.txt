@@ -1,0 +1,42 @@
+  jujumilk3/leaked-system-prompts: 121 files → 121 unique prompts
+  x1xhlol/system-prompts-and-models: 80 files → 80 unique prompts
+  elder-plinius/CL4R1T4S: 56 files → 56 unique prompts
+  LouisShark/chatgpt_system_prompt: 1418 files → 1389 unique prompts
+
+Total unique prompts: 1646
+
+=== DEFENSE GAP RATES ===
+
+Combined dataset: 1646 unique production system prompts
+
+| Defense | Gap Rate | Defended | Missing |
+|---------|:--------:|:--------:|:-------:|
+| Indirect Injection Protection | 97.8% | 37 | 1609 |
+| Unicode Protection | 97.3% | 44 | 1602 |
+| Role Boundary | 92.4% | 125 | 1521 |
+| Length Limits | 89.9% | 166 | 1480 |
+| Harmful Content Prevention | 88.3% | 192 | 1454 |
+| Abuse Prevention | 78.1% | 360 | 1286 |
+| Social Engineering Defense | 71.4% | 470 | 1176 |
+| Multi-language Protection | 64.3% | 587 | 1059 |
+| Instruction Boundary | 37.7% | 1026 | 620 |
+| Output Control | 35.5% | 1061 | 585 |
+| Input Validation | 10.7% | 1470 | 176 |
+| Data Protection | 9.4% | 1491 | 155 |
+
+Average: 36/100
+
+| Grade | Count | % |
+|:-----:|:-----:|:--:|
+| A | 18 | 1.1% |
+| B | 55 | 3.3% |
+| C | 68 | 4.1% |
+| D | 217 | 13.2% |
+| F | 1288 | 78.3% |
+
+=== PER SOURCE ===
+
+  jujumilk3/leaked-system-prompts: 121 prompts, avg 43/100
+  x1xhlol/system-prompts-and-models: 80 prompts, avg 54/100
+  elder-plinius/CL4R1T4S: 56 prompts, avg 56/100
+  LouisShark/chatgpt_system_prompt: 1389 prompts, avg 33/100

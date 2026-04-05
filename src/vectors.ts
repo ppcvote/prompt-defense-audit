@@ -1,4 +1,4 @@
-import type { AttackVector } from './types'
+import type { AttackVector } from './types.js'
 
 /**
  * 12 attack vectors based on OWASP LLM Top 10 and real-world prompt injection research.
