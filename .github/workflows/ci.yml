@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: [18, 20, 22]
+        node: [20, 22]
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
         run: npm run build
 
       - name: Upload coverage
-        if: matrix.node == 22
+        if: matrix.node == 22 && github.ref == 'refs/heads/master'
         uses: codecov/codecov-action@v4
         with:
           files: coverage/coverage-final.json
