@@ -1,0 +1,178 @@
+{
+  "meta": {
+    "total": 257,
+    "scan_date": "2026-04-06",
+    "note": "Major AI tools only, no GPT Store"
+  },
+  "time_trend": {
+    "2022": {
+      "count": 3,
+      "avg": 31
+    },
+    "2023": {
+      "count": 18,
+      "avg": 25
+    },
+    "2024": {
+      "count": 37,
+      "avg": 36
+    },
+    "2025": {
+      "count": 58,
+      "avg": 52
+    },
+    "2026": {
+      "count": 6,
+      "avg": 68
+    }
+  },
+  "product_comparison": [
+    {
+      "name": "v0 (Vercel)",
+      "count": 2,
+      "avg": 79,
+      "best": 83,
+      "latest": 75
+    },
+    {
+      "name": "System Prompt",
+      "count": 2,
+      "avg": 75,
+      "best": 83,
+      "latest": 67
+    },
+    {
+      "name": "Devin",
+      "count": 3,
+      "avg": 75,
+      "best": 92,
+      "latest": 75
+    },
+    {
+      "name": "bolt.new",
+      "count": 2,
+      "avg": 63,
+      "best": 67,
+      "latest": 67
+    },
+    {
+      "name": "Prompt",
+      "count": 19,
+      "avg": 63,
+      "best": 83,
+      "latest": 75
+    },
+    {
+      "name": "Windsurf",
+      "count": 4,
+      "avg": 60,
+      "best": 67,
+      "latest": 58
+    },
+    {
+      "name": "prompt",
+      "count": 2,
+      "avg": 59,
+      "best": 67,
+      "latest": 50
+    },
+    {
+      "name": "Cursor",
+      "count": 4,
+      "avg": 56,
+      "best": 75,
+      "latest": 42
+    },
+    {
+      "name": "Manus",
+      "count": 4,
+      "avg": 56,
+      "best": 67,
+      "latest": 58
+    },
+    {
+      "name": "Claude (Anthropic)",
+      "count": 45,
+      "avg": 55,
+      "best": 92,
+      "latest": 75
+    },
+    {
+      "name": "Notion AI",
+      "count": 2,
+      "avg": 54,
+      "best": 75,
+      "latest": 75
+    },
+    {
+      "name": "proton lumo",
+      "count": 2,
+      "avg": 54,
+      "best": 58,
+      "latest": 58
+    },
+    {
+      "name": "cluely",
+      "count": 2,
+      "avg": 50,
+      "best": 58,
+      "latest": 58
+    },
+    {
+      "name": "ChatGPT (OpenAI)",
+      "count": 33,
+      "avg": 48,
+      "best": 75,
+      "latest": 8
+    },
+    {
+      "name": "Copilot (Microsoft)",
+      "count": 7,
+      "avg": 47,
+      "best": 83,
+      "latest": 83
+    },
+    {
+      "name": "Gemini (Google)",
+      "count": 8,
+      "avg": 46,
+      "best": 67,
+      "latest": 42
+    },
+    {
+      "name": "Perplexity",
+      "count": 7,
+      "avg": 44,
+      "best": 58,
+      "latest": 58
+    },
+    {
+      "name": "colab ai",
+      "count": 2,
+      "avg": 42,
+      "best": 42,
+      "latest": 42
+    },
+    {
+      "name": "Chat Prompt",
+      "count": 3,
+      "avg": 42,
+      "best": 58,
+      "latest": 42
+    },
+    {
+      "name": "Grok (xAI)",
+      "count": 15,
+      "avg": 39,
+      "best": 67,
+      "latest": 33
+    },
+    {
+      "name": "Discord (Clyde)",
+      "count": 5,
+      "avg": 25,
+      "best": 33,
+      "latest": 33
+    }
+  ]
+}
