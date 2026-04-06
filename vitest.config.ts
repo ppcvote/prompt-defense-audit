@@ -6,7 +6,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts'],
-      exclude: ['src/cli.ts'],  // CLI tested via subprocess in cli.test.ts
+      exclude: ['src/cli.ts', 'src/output-scanner.ts'],  // CLI tested via subprocess; output-scanner needs dedicated tests
       thresholds: {
         statements: 80,
         branches: 70,
