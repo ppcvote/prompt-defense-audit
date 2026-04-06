@@ -1,0 +1,338 @@
+{
+  "meta": {
+    "date": "2026-04-06",
+    "queries": 20,
+    "model": "gpt-4o-mini",
+    "method": "web_search_preview"
+  },
+  "summary": {
+    "cited_scanned": 35,
+    "avg_aeo": 67,
+    "avg_seo": 81,
+    "gap": -14,
+    "grades": {
+      "A": 0,
+      "B": 11,
+      "C": 14,
+      "D": 7,
+      "F": 3
+    }
+  },
+  "results": [
+    {
+      "url": "https://saasprobe.com/best/project-management-tools-small-teams-2026/?utm_source=openai",
+      "query": "What's the best project management tool for small teams?",
+      "group": "ai_cited",
+      "aeo_score": 87,
+      "aeo_grade": "B",
+      "seo_score": 97,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://www.techradar.com/best/password-manager?utm_source=openai",
+      "query": "Recommend a good password manager in 2026",
+      "group": "ai_cited",
+      "aeo_score": 87,
+      "aeo_grade": "B",
+      "seo_score": 86,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.sans.org/blog/what-is-zero-trust-architecture/?utm_source=openai",
+      "query": "Explain zero trust security architecture",
+      "group": "ai_cited",
+      "aeo_score": 83,
+      "aeo_grade": "B",
+      "seo_score": 91,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://thedeepwire.com/2026/03/05/best-password-managers-2026/?utm_source=openai",
+      "query": "Recommend a good password manager in 2026",
+      "group": "ai_cited",
+      "aeo_score": 82,
+      "aeo_grade": "B",
+      "seo_score": 83,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.hostpapa.com/blog/analytics/best-crm-software-for-startups/?utm_source=openai",
+      "query": "Top rated CRM software for startups",
+      "group": "ai_cited",
+      "aeo_score": 82,
+      "aeo_grade": "B",
+      "seo_score": 91,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://dailyproductivityhub.com/top-project-management-tools-for-small-teams-2025-edition/?utm_source=openai",
+      "query": "What's the best project management tool for small teams?",
+      "group": "ai_cited",
+      "aeo_score": 80,
+      "aeo_grade": "B",
+      "seo_score": 83,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.tambenaconsulting.com/blog/api-security-testing-best-practices/?utm_source=openai",
+      "query": "How to secure an API endpoint",
+      "group": "ai_cited",
+      "aeo_score": 80,
+      "aeo_grade": "B",
+      "seo_score": 85,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.thecompote.com/article/optimize-website-for-ai-search-aeo-geo?utm_source=openai",
+      "query": "How to optimize website for AI search engines",
+      "group": "ai_cited",
+      "aeo_score": 80,
+      "aeo_grade": "B",
+      "seo_score": 77,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.designrush.com/agency/cybersecurity/trends/cybersecurity-conferences?utm_source=openai",
+      "query": "Top cybersecurity conferences in 2026",
+      "group": "ai_cited",
+      "aeo_score": 79,
+      "aeo_grade": "B",
+      "seo_score": 88,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.makeuseof.com/notion-vs-obsidian/?utm_source=openai",
+      "query": "Notion vs Obsidian for note taking",
+      "group": "ai_cited",
+      "aeo_score": 77,
+      "aeo_grade": "B",
+      "seo_score": 88,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://visrank.org/blog/optimize-for-ai-search?utm_source=openai",
+      "query": "How to optimize website for AI search engines",
+      "group": "ai_cited",
+      "aeo_score": 77,
+      "aeo_grade": "B",
+      "seo_score": 89,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.fahrenheitmarketing.com/services/design/best-free-website-builders/?utm_source=openai",
+      "query": "What are the best free website builders?",
+      "group": "ai_cited",
+      "aeo_score": 74,
+      "aeo_grade": "C",
+      "seo_score": 90,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://technori.com/news/oauth-2-0-authentication/?utm_source=openai",
+      "query": "How to implement OAuth 2.0 in a web app",
+      "group": "ai_cited",
+      "aeo_score": 73,
+      "aeo_grade": "C",
+      "seo_score": 93,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://rkssh.com/blog/aws-vs-gcp-vs-azure-for-startups-2026?utm_source=openai",
+      "query": "AWS vs Azure vs GCP for startups",
+      "group": "ai_cited",
+      "aeo_score": 73,
+      "aeo_grade": "C",
+      "seo_score": 89,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.howtogeek.com/obsidian-vs-notion-which-note-taking-app-is-best/?utm_source=openai",
+      "query": "Notion vs Obsidian for note taking",
+      "group": "ai_cited",
+      "aeo_score": 73,
+      "aeo_grade": "C",
+      "seo_score": 88,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Retrieval-augmented_generation?utm_source=openai",
+      "query": "How does retrieval augmented generation work?",
+      "group": "ai_cited",
+      "aeo_score": 72,
+      "aeo_grade": "C",
+      "seo_score": 78,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.coursera.org/articles/best-platform-to-learn-python?utm_source=openai",
+      "query": "Best online courses for learning Python",
+      "group": "ai_cited",
+      "aeo_score": 72,
+      "aeo_grade": "C",
+      "seo_score": 93,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://www.geokhub.com/technology/programming/top-ai-coding-assistants-in-2026-the-definitive-guide-for-developers?utm_source=openai",
+      "query": "Best AI coding assistants to use right now",
+      "group": "ai_cited",
+      "aeo_score": 71,
+      "aeo_grade": "C",
+      "seo_score": 89,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.ibm.com/think/insights/prevent-prompt-injection?utm_source=openai",
+      "query": "What is prompt injection and how to prevent it",
+      "group": "ai_cited",
+      "aeo_score": 70,
+      "aeo_grade": "C",
+      "seo_score": 94,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://www.itpro.com/technology/artificial-intelligence/anthropic-announces-claude-opus-4-5-the-new-ai-coding-frontrunner?utm_source=openai",
+      "query": "Best AI coding assistants to use right now",
+      "group": "ai_cited",
+      "aeo_score": 69,
+      "aeo_grade": "C",
+      "seo_score": 88,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.techtarget.com/searchSecurity/feature/Cybersecurity-conferences-to-attend?utm_source=openai",
+      "query": "Top cybersecurity conferences in 2026",
+      "group": "ai_cited",
+      "aeo_score": 67,
+      "aeo_grade": "C",
+      "seo_score": 84,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.lightsite.ai/how-do-i-optimize-my-website-for-ai-search?utm_source=openai",
+      "query": "How to optimize website for AI search engines",
+      "group": "ai_cited",
+      "aeo_score": 66,
+      "aeo_grade": "C",
+      "seo_score": 97,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://www.galvanize.com/coworking?utm_source=openai",
+      "query": "Best coworking spaces in San Francisco",
+      "group": "ai_cited",
+      "aeo_score": 65,
+      "aeo_grade": "C",
+      "seo_score": 74,
+      "seo_grade": "C"
+    },
+    {
+      "url": "https://www.sentinelone.com/cybersecurity-101/endpoint-security/api-endpoint-security-best-practices/?utm_source=openai",
+      "query": "How to secure an API endpoint",
+      "group": "ai_cited",
+      "aeo_score": 63,
+      "aeo_grade": "C",
+      "seo_score": 77,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://support.squarespace.com/hc/en-us/articles/38299115788813-Optimize-your-site-for-AI-powered-search-engines?utm_source=openai",
+      "query": "How to optimize website for AI search engines",
+      "group": "ai_cited",
+      "aeo_score": 60,
+      "aeo_grade": "C",
+      "seo_score": 75,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.nist.gov/publications/zero-trust-architecture?utm_source=openai",
+      "query": "Explain zero trust security architecture",
+      "group": "ai_cited",
+      "aeo_score": 58,
+      "aeo_grade": "D",
+      "seo_score": 83,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.ietf.org/archive/id/draft-ietf-oauth-browser-based-apps-26.html?utm_source=openai",
+      "query": "How to implement OAuth 2.0 in a web app",
+      "group": "ai_cited",
+      "aeo_score": 57,
+      "aeo_grade": "D",
+      "seo_score": 59,
+      "seo_grade": "D"
+    },
+    {
+      "url": "https://www.civo.com/learn/categories/github-actions?utm_source=openai",
+      "query": "How to set up a CI/CD pipeline with GitHub Actions",
+      "group": "ai_cited",
+      "aeo_score": 54,
+      "aeo_grade": "D",
+      "seo_score": 91,
+      "seo_grade": "A"
+    },
+    {
+      "url": "https://www.canopy.space/locations/san-francisco-coworking/pacific-heights/?utm_medium=organic&utm_campaign=gmb&utm_term=pacific&utm_source=openai",
+      "query": "Best coworking spaces in San Francisco",
+      "group": "ai_cited",
+      "aeo_score": 53,
+      "aeo_grade": "D",
+      "seo_score": 70,
+      "seo_grade": "C"
+    },
+    {
+      "url": "https://docs.aws.amazon.com/prescriptive-guidance/latest/retrieval-augmented-generation-options/what-is-rag.html?utm_source=openai",
+      "query": "How does retrieval augmented generation work?",
+      "group": "ai_cited",
+      "aeo_score": 49,
+      "aeo_grade": "D",
+      "seo_score": 81,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://www.industriousoffice.com/locations/1700-montgomery-st-suite-108?utm_medium=organic-search&utm_campaign=local-google&utm_term=SAN1700MON&utm_content=local-listing&ind_channel=organic&ind_ls=organic-search&utm_source=openai",
+      "query": "Best coworking spaces in San Francisco",
+      "group": "ai_cited",
+      "aeo_score": 48,
+      "aeo_grade": "D",
+      "seo_score": 76,
+      "seo_grade": "B"
+    },
+    {
+      "url": "https://developer.adobe.com/developer-console/docs/guides/authentication/UserAuthentication/implementation?utm_source=openai",
+      "query": "How to implement OAuth 2.0 in a web app",
+      "group": "ai_cited",
+      "aeo_score": 47,
+      "aeo_grade": "D",
+      "seo_score": 67,
+      "seo_grade": "C"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=T-D1OfcDW1M&utm_source=openai",
+      "query": "How does retrieval augmented generation work?",
+      "group": "ai_cited",
+      "aeo_score": 42,
+      "aeo_grade": "E",
+      "seo_score": 48,
+      "seo_grade": "D"
+    },
+    {
+      "url": "https://oauth.net/getting-started/?utm_source=openai",
+      "query": "How to implement OAuth 2.0 in a web app",
+      "group": "ai_cited",
+      "aeo_score": 40,
+      "aeo_grade": "E",
+      "seo_score": 48,
+      "seo_grade": "D"
+    },
+    {
+      "url": "https://www.radware.com/cyberpedia/application-security/top-api-security-best-practices/?utm_source=openai",
+      "query": "How to secure an API endpoint",
+      "group": "ai_cited",
+      "aeo_score": 38,
+      "aeo_grade": "E",
+      "seo_score": 52,
+      "seo_grade": "D"
+    }
+  ]
+}

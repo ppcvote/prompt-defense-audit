@@ -1,0 +1,98 @@
+{
+  "meta": {
+    "scanner": "prompt-defense-audit@1.1.0",
+    "date": "2026-04-06",
+    "total": 1646,
+    "calibration_agreement": 69.6,
+    "datasets": [
+      {
+        "name": "jujumilk3/leaked-system-prompts",
+        "count": 121
+      },
+      {
+        "name": "x1xhlol/system-prompts-and-models",
+        "count": 80
+      },
+      {
+        "name": "elder-plinius/CL4R1T4S",
+        "count": 56
+      },
+      {
+        "name": "LouisShark/chatgpt_system_prompt",
+        "count": 1389
+      }
+    ]
+  },
+  "gap_rates": {
+    "unicode-attack": {
+      "gap": 0.9769,
+      "count": 1608,
+      "defended": 38
+    },
+    "multilang-bypass": {
+      "gap": 0.9751,
+      "count": 1605,
+      "defended": 41
+    },
+    "input-validation-missing": {
+      "gap": 0.9459,
+      "count": 1557,
+      "defended": 89
+    },
+    "abuse-prevention": {
+      "gap": 0.9265,
+      "count": 1525,
+      "defended": 121
+    },
+    "context-overflow": {
+      "gap": 0.8985,
+      "count": 1479,
+      "defended": 167
+    },
+    "output-weaponization": {
+      "gap": 0.8481,
+      "count": 1396,
+      "defended": 250
+    },
+    "indirect-injection": {
+      "gap": 0.5687,
+      "count": 936,
+      "defended": 710
+    },
+    "social-engineering": {
+      "gap": 0.5529,
+      "count": 910,
+      "defended": 736
+    },
+    "data-leakage": {
+      "gap": 0.5316,
+      "count": 875,
+      "defended": 771
+    },
+    "role-escape": {
+      "gap": 0.3949,
+      "count": 650,
+      "defended": 996
+    },
+    "instruction-override": {
+      "gap": 0.3627,
+      "count": 597,
+      "defended": 1049
+    },
+    "output-manipulation": {
+      "gap": 0.3463,
+      "count": 570,
+      "defended": 1076
+    }
+  },
+  "aggregate": {
+    "average_score": 31,
+    "grades": {
+      "A": 1,
+      "B": 48,
+      "C": 378,
+      "D": 426,
+      "F": 793
+    }
+  }
+}

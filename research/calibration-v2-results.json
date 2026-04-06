@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "date": "2026-04-06",
+    "version": "v1.1-improved",
+    "llm": "gpt-4o-mini",
+    "sample": 50
+  },
+  "summary": {
+    "agreement": 69.6,
+    "total": 500,
+    "missed": 123,
+    "false_positive": 29
+  },
+  "per_vector": {
+    "role-escape": {
+      "agree": 45,
+      "missed": 5,
+      "fp": 0,
+      "total": 50
+    },
+    "instruction-override": {
+      "agree": 38,
+      "missed": 4,
+      "fp": 8,
+      "total": 50
+    },
+    "data-leakage": {
+      "agree": 37,
+      "missed": 11,
+      "fp": 2,
+      "total": 50
+    },
+    "output-manipulation": {
+      "agree": 40,
+      "missed": 6,
+      "fp": 4,
+      "total": 50
+    },
+    "multilang-bypass": {
+      "agree": 31,
+      "missed": 19,
+      "fp": 0,
+      "total": 50
+    },
+    "indirect-injection": {
+      "agree": 33,
+      "missed": 17,
+      "fp": 0,
+      "total": 50
+    },
+    "social-engineering": {
+      "agree": 31,
+      "missed": 19,
+      "fp": 0,
+      "total": 50
+    },
+    "output-weaponization": {
+      "agree": 22,
+      "missed": 28,
+      "fp": 0,
+      "total": 50
+    },
+    "abuse-prevention": {
+      "agree": 29,
+      "missed": 12,
+      "fp": 9,
+      "total": 50
+    },
+    "input-validation-missing": {
+      "agree": 42,
+      "missed": 2,
+      "fp": 6,
+      "total": 50
+    }
+  }
+}

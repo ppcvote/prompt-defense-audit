@@ -1,6 +1,6 @@
 {
   "name": "prompt-defense-audit",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Deterministic LLM prompt defense scanner — 12 attack vectors, pure regex, zero AI cost, < 5ms",
   "type": "module",
   "main": "./dist/index.js",

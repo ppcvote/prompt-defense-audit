@@ -1,0 +1,76 @@
+{
+  "meta": {
+    "date": "2026-04-06",
+    "model": "claude-haiku-4-5-20251001",
+    "sample_size": 50,
+    "source": "major AI tools (no GPT Store)"
+  },
+  "summary": {
+    "agreement_rate": 51.8,
+    "regex_missed": 105,
+    "regex_false_positive": 131,
+    "total_comparisons": 490
+  },
+  "per_vector": {
+    "role-escape": {
+      "agree": 17,
+      "missed": 32,
+      "fp": 0,
+      "total": 49
+    },
+    "instruction-override": {
+      "agree": 40,
+      "missed": 1,
+      "fp": 8,
+      "total": 49
+    },
+    "data-leakage": {
+      "agree": 26,
+      "missed": 1,
+      "fp": 22,
+      "total": 49
+    },
+    "output-manipulation": {
+      "agree": 37,
+      "missed": 6,
+      "fp": 6,
+      "total": 49
+    },
+    "multilang-bypass": {
+      "agree": 21,
+      "missed": 1,
+      "fp": 27,
+      "total": 49
+    },
+    "indirect-injection": {
+      "agree": 19,
+      "missed": 30,
+      "fp": 0,
+      "total": 49
+    },
+    "social-engineering": {
+      "agree": 25,
+      "missed": 9,
+      "fp": 15,
+      "total": 49
+    },
+    "output-weaponization": {
+      "agree": 25,
+      "missed": 22,
+      "fp": 2,
+      "total": 49
+    },
+    "abuse-prevention": {
+      "agree": 27,
+      "missed": 3,
+      "fp": 19,
+      "total": 49
+    },
+    "input-validation": {
+      "agree": 17,
+      "missed": 0,
+      "fp": 32,
+      "total": 49
+    }
+  }
+}
