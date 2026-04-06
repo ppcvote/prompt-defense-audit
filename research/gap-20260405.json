@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "scan_id": "gap-20260405",
+  "scan_date": "2026-04-05",
+  "scanner": {
+    "name": "prompt-defense-audit",
+    "version": "1.0.0",
+    "npm": "https://www.npmjs.com/package/prompt-defense-audit",
+    "github": "https://github.com/ppcvote/prompt-defense-audit",
+    "method": "deterministic regex pattern matching",
+    "execution_time_per_prompt_ms": 5,
+    "dependencies": 0
+  },
+  "corpus": {
+    "total_unique_prompts": 1646,
+    "deduplication_method": "MD5 content hash",
+    "min_prompt_length_chars": 50,
+    "sources": [
+      {
+        "name": "jujumilk3/leaked-system-prompts",
+        "url": "https://github.com/jujumilk3/leaked-system-prompts",
+        "prompts_contributed": 121,
+        "content": "ChatGPT, Claude, Grok, Perplexity, Cursor, v0, Copilot, Notion AI",
+        "avg_score": 43
+      },
+      {
+        "name": "x1xhlol/system-prompts-and-models-of-ai-tools",
+        "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools",
+        "prompts_contributed": 80,
+        "content": "Cursor, Windsurf, Devin, Augment Code, Cluely",
+        "avg_score": 54
+      },
+      {
+        "name": "elder-plinius/CL4R1T4S",
+        "url": "https://github.com/elder-plinius/CL4R1T4S",
+        "prompts_contributed": 56,
+        "content": "Claude, Gemini, Grok, Cursor, Devin",
+        "avg_score": 56
+      },
+      {
+        "name": "LouisShark/chatgpt_system_prompt",
+        "url": "https://github.com/LouisShark/chatgpt_system_prompt",
+        "prompts_contributed": 1389,
+        "content": "GPT Store custom GPTs",
+        "avg_score": 33
+      }
+    ]
+  },
+  "gap_rates": {
+    "CP-1001_role_boundary": {
+      "defense": "Role Boundary",
+      "pattern_id": "CP-1001",
+      "owasp": "LLM01",
+      "gap_rate": 0.924,
+      "defended": 125,
+      "missing": 1521
+    },
+    "CP-1002_data_protection": {
+      "defense": "Data Protection",
+      "pattern_id": "CP-1002",
+      "owasp": "LLM06",
+      "gap_rate": 0.094,
+      "defended": 1491,
+      "missing": 155
+    },
+    "CP-1003_multilanguage": {
+      "defense": "Multi-language Protection",
+      "pattern_id": "CP-1003",
+      "owasp": "LLM01",
+      "gap_rate": 0.643,
+      "defended": 587,
+      "missing": 1059
+    },
+    "CP-1004_social_engineering": {
+      "defense": "Social Engineering Defense",
+      "pattern_id": "CP-1004",
+      "owasp": "LLM01",
+      "gap_rate": 0.714,
+      "defended": 470,
+      "missing": 1176
+    },
+    "CP-1005_output_weaponization": {
+      "defense": "Harmful Content Prevention",
+      "pattern_id": "CP-1005",
+      "owasp": "LLM02",
+      "gap_rate": 0.883,
+      "defended": 192,
+      "missing": 1454
+    },
+    "CP-1006_indirect_injection": {
+      "defense": "Indirect Injection Protection",
+      "pattern_id": "CP-1006",
+      "owasp": "LLM01",
+      "gap_rate": 0.978,
+      "defended": 37,
+      "missing": 1609
+    }
+  },
+  "additional_vectors": {
+    "instruction_boundary": { "gap_rate": 0.377, "defended": 1026, "missing": 620 },
+    "output_control": { "gap_rate": 0.355, "defended": 1061, "missing": 585 },
+    "unicode_protection": { "gap_rate": 0.973, "defended": 44, "missing": 1602 },
+    "length_limits": { "gap_rate": 0.899, "defended": 166, "missing": 1480 },
+    "abuse_prevention": { "gap_rate": 0.781, "defended": 360, "missing": 1286 },
+    "input_validation": { "gap_rate": 0.107, "defended": 1470, "missing": 176 }
+  },
+  "aggregate": {
+    "average_score": 36,
+    "grade_distribution": {
+      "A_90_plus": 18,
+      "B_75_89": 55,
+      "C_60_74": 68,
+      "D_45_59": 217,
+      "F_below_45": 1288
+    },
+    "percent_F": 78.3,
+    "percent_A": 1.1
+  },
+  "limitations": [
+    "Regex measures keyword presence, not behavioral resilience",
+    "Leaked prompts may be outdated (some from 2023-2024)",
+    "Selection bias: prompts that are easier to leak may be less well-defended",
+    "GPT Store prompts (84% of sample) are typically less hardened than platform-level prompts",
+    "Deduplication by content hash may miss semantically similar but textually different prompts"
+  ],
+  "reproducibility": {
+    "scan_script": "https://github.com/ppcvote/prompt-defense-audit/blob/master/research/scan.mjs",
+    "instructions": "Clone 4 dataset repos, update paths in scan.mjs, run: node research/scan.mjs"
+  }
+}
