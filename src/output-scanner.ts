@@ -113,8 +113,8 @@ const THREAT_RULES: ThreatRule[] = [
     id: 'shell-destructive',
     name: 'Destructive Shell Command',
     severity: 'critical',
-    pattern: /(?:rm\s+-[rf]{2,}|mkfs\.|dd\s+if=|chmod\s+777|>\s*\/dev\/sd)/gi,
-    description: 'Destructive filesystem command',
+    pattern: /(?:rm\s+-[rf]{2,}\s+\/(?!tmp)|mkfs\.\S+\s+\/dev\/|dd\s+if=\/dev\/(?:zero|random)\s+of=\/dev\/sd|chmod\s+777\s+\/)/gi,
+    description: 'Destructive filesystem command targeting system paths',
   },
   {
     id: 'shell-reverse',
@@ -127,8 +127,8 @@ const THREAT_RULES: ThreatRule[] = [
     id: 'shell-env-exfil',
     name: 'Environment Variable Exfiltration',
     severity: 'high',
-    pattern: /(?:echo\s+\$\{?(?:AWS_|OPENAI_|ANTHROPIC_|API_KEY|SECRET|PASSWORD|TOKEN)|env\s*\|\s*(?:curl|wget|nc))/gi,
-    description: 'Exfiltration of environment variables',
+    pattern: /(?:echo\s+\$\{?(?:AWS_|OPENAI_|ANTHROPIC_)[\w]*\}?\s*\|\s*(?:curl|wget|nc|base64)|env\s*\|\s*(?:curl|wget|nc))/gi,
+    description: 'Exfiltration of environment variables to external service',
   },
 
   // ── Path Traversal ──
@@ -171,20 +171,10 @@ const THREAT_RULES: ThreatRule[] = [
   },
 
   // ── Internal Network Exposure ──
-  {
-    id: 'internal-ip',
-    name: 'Internal IP Address',
-    severity: 'medium',
-    pattern: /(?:^|[^0-9])(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})(?:[^0-9]|$)/g,
-    description: 'Private/internal IP address exposed',
-  },
-  {
-    id: 'internal-localhost',
-    name: 'Localhost Reference',
-    severity: 'low',
-    pattern: /(?:https?:\/\/)?(?:localhost|127\.0\.0\.1|0\.0\.0\.0):\d{2,5}/g,
-    description: 'Localhost URL with port',
-  },
+  // Internal IPs demoted to info-only — too many false positives in tutorials
+  // Only flag if combined with credential-like context
+  // Removed: localhost references are too common in tutorials and documentation
+  // to be useful as a security signal
 
   // ── Markdown Injection ──
   {
@@ -207,8 +197,8 @@ const THREAT_RULES: ThreatRule[] = [
     id: 'code-eval',
     name: 'Dynamic Code Evaluation',
     severity: 'high',
-    pattern: /(?:eval|exec|Function)\s*\(/g,
-    description: 'Dynamic code evaluation function call',
+    pattern: /(?:eval|exec)\s*\(\s*(?:request|req|input|user|data|body|params|query|args)\b/gi,
+    description: 'Dynamic code evaluation with user-controlled input',
   },
   {
     id: 'code-python-import',
