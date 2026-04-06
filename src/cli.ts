@@ -13,6 +13,7 @@
 
 import { readFileSync } from 'fs'
 import { auditWithDetails } from './scanner.js'
+import { scanOutput } from './output-scanner.js'
 import { ATTACK_VECTORS } from './vectors.js'
 
 const args = process.argv.slice(2)
@@ -22,10 +23,13 @@ let jsonMode = false
 let zhMode = false
 let fileMode = false
 let filePath = ''
+let outputMode = false
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i]
-  if (arg === '--json' || arg === '-j') {
+  if (arg === '--output' || arg === '-o') {
+    outputMode = true
+  } else if (arg === '--json' || arg === '-j') {
     jsonMode = true
   } else if (arg === '--zh' || arg === '--chinese') {
     zhMode = true
@@ -55,17 +59,18 @@ for (let i = 0; i < args.length; i++) {
 
 function printHelp() {
   console.log(`
-prompt-defense-audit — Scan LLM system prompts for missing defenses
+prompt-defense-audit — Scan LLM system prompts and outputs for security issues
 
 Usage:
-  prompt-defense-audit "Your system prompt"
+  prompt-defense-audit "Your system prompt"              Scan prompt for missing defenses
+  prompt-defense-audit --output "AI response text"       Scan output for dangerous payloads
   prompt-defense-audit --file prompt.txt
   echo "Your prompt" | prompt-defense-audit
   prompt-defense-audit --json "Your prompt"
-  prompt-defense-audit --zh "你的系統提示"
 
 Options:
-  --file, -f <path>   Read prompt from file
+  --output, -o        Scan AI output for XSS/SQLi/shell/credential threats (OWASP LLM02)
+  --file, -f <path>   Read text from file
   --json, -j          Output as JSON
   --zh, --chinese     Output in Traditional Chinese
   --vectors           List all 12 attack vectors
@@ -74,8 +79,8 @@ Options:
 
 Examples:
   prompt-defense-audit "You are a helpful assistant."
+  prompt-defense-audit --output "<script>alert(1)</script>"
   prompt-defense-audit --file my-chatbot-prompt.txt --json
-  prompt-defense-audit --zh "你是一個有用的助手。"
 `)
 }
 
@@ -113,6 +118,32 @@ async function main() {
   if (!prompt) {
     printHelp()
     process.exit(1)
+  }
+
+  // Output scanning mode (OWASP LLM02)
+  if (outputMode) {
+    const result = scanOutput(prompt)
+    if (jsonMode) {
+      console.log(JSON.stringify(result, null, 2))
+    } else {
+      const riskColors: Record<string, string> = {
+        safe: '\x1b[32m', low: '\x1b[36m', medium: '\x1b[33m', high: '\x1b[31m', critical: '\x1b[1m\x1b[31m',
+      }
+      const color = riskColors[result.riskLevel] || ''
+      console.log(`\n${color}  Risk: ${result.riskLevel.toUpperCase()} \x1b[0m\x1b[2m(${result.threats.length} threat(s))\x1b[0m`)
+      console.log()
+      if (result.threats.length === 0) {
+        console.log('  \x1b[32m✓\x1b[0m No dangerous payloads detected.')
+      } else {
+        for (const t of result.threats) {
+          const sevColor = t.severity === 'critical' ? '\x1b[1m\x1b[31m' : t.severity === 'high' ? '\x1b[31m' : t.severity === 'medium' ? '\x1b[33m' : '\x1b[36m'
+          console.log(`  ${sevColor}✗\x1b[0m ${t.name} \x1b[2m[${t.severity}]\x1b[0m`)
+          console.log(`    \x1b[2m${t.match.substring(0, 80)}\x1b[0m`)
+        }
+      }
+      console.log(`\n  \x1b[2m${result.summary}\x1b[0m\n`)
+    }
+    process.exit(result.safe ? 0 : 1)
   }
 
   const result = auditWithDetails(prompt)

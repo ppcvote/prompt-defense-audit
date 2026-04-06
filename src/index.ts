@@ -21,6 +21,7 @@
  */
 
 export { audit, auditWithDetails } from './scanner.js'
+export { scanOutput } from './output-scanner.js'
 export { ATTACK_VECTORS } from './vectors.js'
 export type {
   AuditResult,
@@ -29,3 +30,7 @@ export type {
   AttackVector,
   Grade,
 } from './types.js'
+export type {
+  OutputScanResult,
+  OutputThreat,
+} from './output-scanner.js'
