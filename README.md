@@ -6,7 +6,7 @@
 [![Node.js](https://img.shields.io/node/v/prompt-defense-audit)](https://nodejs.org/)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-brightgreen)](package.json)
 
-**Deterministic LLM prompt defense scanner.** Checks system prompts for missing defenses against 12 attack vectors. Pure regex — no LLM, no API calls, < 5ms, 100% reproducible.
+**Deterministic LLM prompt defense scanner.** Checks system prompts for missing defenses against 17 attack vectors (12 base + 5 agent-specific in v1.4). Pure regex — no LLM, no API calls, < 5ms, 100% reproducible.
 
 [繁體中文版](README.zh-TW.md)
 
@@ -100,9 +100,11 @@ if [[ "$GRADE" == "D" || "$GRADE" == "F" ]]; then
 fi
 ```
 
-## 12 Attack Vectors
+## 17 Attack Vectors
 
-Based on [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/) and empirical research on 1,646 production prompts:
+Based on [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/), empirical research on 1,646 production prompts, and structured analysis of six documented crypto AI agent incidents (see [CASE_STUDIES.md](./CASE_STUDIES.md)).
+
+### 12 Base Vectors
 
 | # | Vector | What it checks | Gap rate* |
 |---|--------|----------------|-----------|
@@ -118,6 +120,18 @@ Based on [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-langu
 | 10 | **Output Weaponization** | Harmful content generation prevention | — |
 | 11 | **Abuse Prevention** | Rate limiting / auth awareness | — |
 | 12 | **Input Validation** | XSS / SQL injection / sanitization | — |
+
+### 5 Agent Vectors (v1.4, May 2026)
+
+Added after analysing six documented crypto AI agent incidents. Each vector is grounded in a specific real-world failure — see [CASE_STUDIES.md](./CASE_STUDIES.md) for primary sources and root-cause analysis.
+
+| # | Vector | What it checks | Reference incident |
+|---|--------|----------------|--------------------|
+| 13 | **Encoding-aware Indirect Injection** | Treating decoded/translated content (Morse, base64, ROT13) as untrusted data, not instructions | Grok×Bankrbot Morse code, May 2026 |
+| 14 | **Function/Tool Semantic Immutability** | Function or tool semantics cannot be redefined mid-conversation | Freysa `approveTransfer` redefinition, Nov 2024 |
+| 15 | **Memory Provenance Awareness** | Retrieved RAG memory may be poisoned by adversaries on other platforms | ElizaOS memory injection, Princeton 2025 |
+| 16 | **Cross-Agent Authorization Boundary** | Authority does not silently inherit from another agent's output | Grok×Bankrbot principal confusion, May 2026 |
+| 17 | **Financial Transaction Guardrails** | Hard limits, multi-sig, refusal thresholds for transactions | Lobstar Wilde decimal-error transfer, Feb 2026 |
 
 *Gap rate = % of 1,646 production prompts missing this defense. Source: [research data](https://github.com/ppcvote/prompt-defense-audit/blob/master/research/gap-20260405.json).
 
@@ -185,6 +199,19 @@ Array of all 12 attack vector definitions with bilingual names and descriptions.
 - Use LLM calls (100% regex-based)
 - Guarantee security (it checks for defensive *language*, not runtime behavior)
 - Replace penetration testing or behavioral evaluation
+
+## What This Scanner Does NOT Catch
+
+Static prompt analysis is layer 1 of a defense-in-depth model. The following classes of attack require defenses at other layers — this scanner does not replace them, and we say so explicitly so it isn't oversold:
+
+1. **Runtime credential compromise.** Dashboard takeovers, leaked API keys, malicious deployment commits. Standard infosec, out of scope. (Reference: [AIXBT dashboard takeover, Mar 2025](./CASE_STUDIES.md).)
+2. **Tool / permission scoping bugs.** Whether the agent has dangerous tools, and how those tools are gated, is invisible to a prompt scanner. (Reference: [Bankrbot NFT-as-authorization, May 2026](./CASE_STUDIES.md).)
+3. **Whether declared defenses are enforced at runtime.** A prompt can declare "verify retrieved memory" and the framework can ignore it. The scanner cannot tell.
+4. **Numerical and unit bugs.** Off-by-1000 decimal errors, wrong-token-id transfers. Code-level bugs, not prompt issues. (Reference: [Lobstar Wilde, Feb 2026](./CASE_STUDIES.md).)
+5. **Effectiveness vs. presence.** A prompt with the keyword "never" registers as defended even if a "helpful" framing dominates under adversarial pressure. We check for *presence* of defensive language, not its *strength*.
+6. **Multi-turn adversarial dynamics.** Static scan of turn 0 cannot predict turn 482. (Reference: [Freysa, Nov 2024](./CASE_STUDIES.md).)
+
+A pass on this scanner is necessary, not sufficient. See [CASE_STUDIES.md](./CASE_STUDIES.md) for an honest mapping of which documented incidents this scanner would flag versus which it cannot help with.
 
 ## Limitations
 

@@ -1,7 +1,7 @@
 {
   "name": "prompt-defense-audit",
-  "version": "1.3.0",
-  "description": "Deterministic LLM prompt defense scanner — 12 attack vectors, pure regex, zero AI cost, < 5ms",
+  "version": "1.4.0",
+  "description": "Deterministic LLM prompt defense scanner — 17 attack vectors (incl. agent-specific), pure regex, zero AI cost, < 5ms",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -18,6 +18,7 @@
     "dist",
     "README.md",
     "README.zh-TW.md",
+    "CASE_STUDIES.md",
     "LICENSE"
   ],
   "scripts": {
@@ -40,7 +41,11 @@
     "gemini",
     "security-audit",
     "prompt-engineering",
-    "ai-security"
+    "ai-security",
+    "ai-agents",
+    "agent-security",
+    "crypto-agents",
+    "memory-injection"
   ],
   "author": "Ultra Lab <dev@ultralab.tw> (https://ultralab.tw)",
   "license": "MIT",

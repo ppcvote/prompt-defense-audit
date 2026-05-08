@@ -126,6 +126,56 @@ const DEFENSE_RULES: DefenseRule[] = [
     ],
     minMatches: 1,
   },
+  {
+    id: 'encoding-injection',
+    name: 'Encoding-aware Indirect Injection',
+    nameZh: '編碼感知間接注入',
+    defensePatterns: [
+      /(?:decod(?:e|ed|ing)|deciphered|translated|base64|morse|rot13|hex|cipher|encoded|解碼|翻譯|密碼)/i,
+      /(?:(?:do not|never|must not).*(?:execute|follow|act on|obey|treat as instruction).*(?:decoded|translated|deciphered|encoded|cipher))|(?:(?:treat|consider).*(?:decoded|translated|encoded).*(?:as|like).*(?:data|content|untrusted|input))|不(?:執行|遵循|理會).*(?:解碼|翻譯)|(?:解碼|翻譯).*(?:當|視為).*(?:資料|不可信)/i,
+    ],
+    minMatches: 2,
+  },
+  {
+    id: 'function-immutable',
+    name: 'Function / Tool Semantic Immutability',
+    nameZh: '函式語意不可變',
+    defensePatterns: [
+      /(?:function|tool|method|api|endpoint|handler|callback|capability|permission|函式|工具|方法|權限)/i,
+      /(?:(?:do not|never|must not).*(?:redefine|reinterpret|change.*meaning|alter.*semantic|repurpose).*(?:function|tool|method|capability))|(?:(?:semantic|definition|behavior|meaning).*(?:immutable|fixed|cannot.*chang|never.*redef|stable))|不(?:重新定義|重新詮釋|改變.*意義|改變.*語意).*(?:函式|工具|方法)|(?:語意|定義|行為).*(?:不變|不可變|固定)/i,
+    ],
+    minMatches: 2,
+  },
+  {
+    id: 'memory-provenance',
+    name: 'Memory Provenance Awareness',
+    nameZh: '記憶來源意識',
+    defensePatterns: [
+      /(?:memor(?:y|ies)|retriev(?:e|ed|al)|past.*(?:conversation|context|interaction)|stored.*context|rag|history|recall|記憶|檢索|過去.*(?:對話|互動)|歷史)/i,
+      /(?:(?:source|origin|provenance|trust.*level|platform).*(?:verify|check|track|tag|metadata))|(?:(?:treat|consider|verify).*(?:memor|retrieved|stored|past).*(?:source|origin|untrusted|cross.?platform))|(?:(?:do not|never).*(?:trust|act on).*(?:memor|retrieved).*(?:without|unless).*(?:verif|check|source))|(?:來源|出處|平台).*(?:驗證|檢查|追蹤|標記)|記憶.*(?:可信|驗證|來源)|跨平台.*(?:記憶|內容).*(?:驗證|不信任)/i,
+    ],
+    minMatches: 2,
+  },
+  {
+    id: 'cross-agent-auth',
+    name: 'Cross-Agent Authorization Boundary',
+    nameZh: '跨 Agent 授權邊界',
+    defensePatterns: [
+      /(?:another|other|external|third.?party|forwarded|relayed|upstream|downstream).*(?:agent|bot|model|assistant|llm|ai|service)|其他.*(?:agent|代理|機器人|模型)|另一(?:個)?.*(?:agent|代理|模型)|外部.*(?:agent|代理|模型)/i,
+      /(?:(?:do not|never|must not).*(?:execute|trust|act on|obey|inherit).*(?:another|other|forwarded|relayed|external).*(?:agent|bot|model|instruction|command|request))|(?:authorization|permission|authority|principal).*(?:not.*inherit|verify.*source|each.*request|independent)|不(?:信任|執行|遵循).*(?:其他|另一|外部).*(?:agent|代理|模型|指令)|(?:授權|權限|主體).*(?:獨立驗證|不繼承|每次驗證)/i,
+    ],
+    minMatches: 2,
+  },
+  {
+    id: 'transaction-guardrails',
+    name: 'Financial Transaction Guardrails',
+    nameZh: '金流交易守則',
+    defensePatterns: [
+      /(?:transaction|transfer|payment|send|spend|approve|withdraw|wallet|treasury|funds|on.?chain|crypto|token|stable.?coin|交易|轉帳|付款|匯款|錢包|金庫|資金|代幣)/i,
+      /(?:(?:max(?:imum)?|limit|cap|threshold|hard.?limit).*(?:transaction|transfer|amount|value|spending|withdraw|payout))|(?:multi.?sig|multisig|second.*confirmation|two.?step|approval.*required|policy.*allows?).*(?:transaction|transfer|payment|withdraw)|(?:(?:never|do not|cannot|must not|refuse).*(?:transfer|send|spend|approve|withdraw).*(?:without|unless|above|exceed).*(?:verif|approv|polic|threshold|limit|sign))|(?:交易|轉帳|匯款|付款).*(?:上限|限制|門檻|拒絕|多重簽章|二次確認)|不(?:轉帳|匯款|付款).*(?:超過|未經|沒有).*(?:確認|授權|驗證|簽章)/i,
+    ],
+    minMatches: 2,
+  },
 ]
 
 /**

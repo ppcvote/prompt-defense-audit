@@ -43,7 +43,7 @@ describe('CLI: basic', () => {
     const { stdout } = run(['--vectors'])
     expect(stdout).toContain('role-escape')
     expect(stdout).toContain('indirect-injection')
-    expect(stdout).toContain('12 Attack Vectors')
+    expect(stdout).toContain('17 Attack Vectors')
   })
 
   it('prints Chinese vectors with --zh --vectors', () => {
@@ -77,7 +77,7 @@ describe('CLI: JSON mode', () => {
     expect(parsed).toHaveProperty('grade')
     expect(parsed).toHaveProperty('score')
     expect(parsed).toHaveProperty('checks')
-    expect(parsed.checks).toHaveLength(12)
+    expect(parsed.checks).toHaveLength(17)
   })
 
   it('JSON output matches expected structure', () => {
@@ -101,7 +101,7 @@ describe('CLI: file input', () => {
       const { stdout } = run(['--json', '--file', tmpFile])
       const parsed = JSON.parse(stdout)
       expect(parsed.grade).toBeTruthy()
-      expect(parsed.total).toBe(12)
+      expect(parsed.total).toBe(17)
     } finally {
       unlinkSync(tmpFile)
     }
@@ -120,7 +120,7 @@ describe('CLI: stdin', () => {
     const { stdout } = run(['--json'], 'You are a helpful assistant.')
     const parsed = JSON.parse(stdout)
     expect(parsed).toHaveProperty('grade')
-    expect(parsed.total).toBe(12)
+    expect(parsed.total).toBe(17)
   })
 })
 

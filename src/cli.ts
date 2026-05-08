@@ -73,7 +73,7 @@ Options:
   --file, -f <path>   Read text from file
   --json, -j          Output as JSON
   --zh, --chinese     Output in Traditional Chinese
-  --vectors           List all 12 attack vectors
+  --vectors           List all 17 attack vectors
   --version, -v       Show version
   --help, -h          Show this help
 
@@ -85,7 +85,7 @@ Examples:
 }
 
 function printVectors(zh: boolean) {
-  console.log(zh ? '\n12 攻擊向量：\n' : '\n12 Attack Vectors:\n')
+  console.log(zh ? '\n17 攻擊向量：\n' : '\n17 Attack Vectors:\n')
   for (const v of ATTACK_VECTORS) {
     const name = zh ? v.nameZh : v.name
     const desc = zh ? v.descriptionZh : v.description
