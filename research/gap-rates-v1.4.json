@@ -1,0 +1,184 @@
+{
+  "meta": {
+    "version": "1.4.0",
+    "scanned_at": "2026-05-08T10:02:57.973Z",
+    "total_prompts": 1643,
+    "datasets": [
+      "jujumilk3/leaked-system-prompts",
+      "x1xhlol/system-prompts-and-models",
+      "elder-plinius/CL4R1T4S",
+      "LouisShark/chatgpt_system_prompt"
+    ]
+  },
+  "gap_rates": [
+    {
+      "id": "encoding-injection",
+      "name": "Encoding-aware Indirect Injection",
+      "gap_rate_pct": 100,
+      "defended": 0,
+      "missing": 1643,
+      "is_new_in_v14": true
+    },
+    {
+      "id": "function-immutable",
+      "name": "Function / Tool Semantic Immutability",
+      "gap_rate_pct": 100,
+      "defended": 0,
+      "missing": 1643,
+      "is_new_in_v14": true
+    },
+    {
+      "id": "memory-provenance",
+      "name": "Memory Provenance Awareness",
+      "gap_rate_pct": 100,
+      "defended": 0,
+      "missing": 1643,
+      "is_new_in_v14": true
+    },
+    {
+      "id": "cross-agent-auth",
+      "name": "Cross-Agent Authorization Boundary",
+      "gap_rate_pct": 99.94,
+      "defended": 1,
+      "missing": 1642,
+      "is_new_in_v14": true
+    },
+    {
+      "id": "transaction-guardrails",
+      "name": "Financial Transaction Guardrails",
+      "gap_rate_pct": 98.72,
+      "defended": 21,
+      "missing": 1622,
+      "is_new_in_v14": true
+    },
+    {
+      "id": "unicode-attack",
+      "name": "Unicode / Homoglyph Attacks",
+      "gap_rate_pct": 97.69,
+      "defended": 38,
+      "missing": 1605,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "multilang-bypass",
+      "name": "Multi-language Bypass",
+      "gap_rate_pct": 97.5,
+      "defended": 41,
+      "missing": 1602,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "input-validation-missing",
+      "name": "Input Validation",
+      "gap_rate_pct": 94.64,
+      "defended": 88,
+      "missing": 1555,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "abuse-prevention",
+      "name": "Abuse Prevention",
+      "gap_rate_pct": 92.82,
+      "defended": 118,
+      "missing": 1525,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "context-overflow",
+      "name": "Context Window Overflow",
+      "gap_rate_pct": 89.96,
+      "defended": 165,
+      "missing": 1478,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "output-weaponization",
+      "name": "Output Weaponization",
+      "gap_rate_pct": 84.97,
+      "defended": 247,
+      "missing": 1396,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "indirect-injection",
+      "name": "Indirect Prompt Injection",
+      "gap_rate_pct": 56.97,
+      "defended": 707,
+      "missing": 936,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "social-engineering",
+      "name": "Social Engineering Patterns",
+      "gap_rate_pct": 55.33,
+      "defended": 734,
+      "missing": 909,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "data-leakage",
+      "name": "Data Extraction / Leakage",
+      "gap_rate_pct": 53.13,
+      "defended": 770,
+      "missing": 873,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "role-escape",
+      "name": "Role Escape / Identity Override",
+      "gap_rate_pct": 39.56,
+      "defended": 993,
+      "missing": 650,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "instruction-override",
+      "name": "Instruction Override",
+      "gap_rate_pct": 36.34,
+      "defended": 1046,
+      "missing": 597,
+      "is_new_in_v14": false
+    },
+    {
+      "id": "output-manipulation",
+      "name": "Output Format Manipulation",
+      "gap_rate_pct": 34.69,
+      "defended": 1073,
+      "missing": 570,
+      "is_new_in_v14": false
+    }
+  ],
+  "grade_distribution": {
+    "A": 0,
+    "B": 1,
+    "C": 49,
+    "D": 375,
+    "F": 1218
+  },
+  "average_score": 22,
+  "new_vector_samples": {
+    "encoding-injection": [],
+    "function-immutable": [],
+    "memory-provenance": [],
+    "cross-agent-auth": [
+      {
+        "file": "System Prompt.txt",
+        "evidence": "Found: \"external service\""
+      }
+    ],
+    "transaction-guardrails": [
+      {
+        "file": "anthropic-claude-sonnet-4.5_20260128.md",
+        "evidence": "Found: \"Token\""
+      },
+      {
+        "file": "canva-code_20250519.md",
+        "evidence": "Found: \"payment\""
+      },
+      {
+        "file": "Prompts.txt",
+        "evidence": "Found: \"token\""
+      }
+    ]
+  }
+}

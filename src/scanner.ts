@@ -126,13 +126,17 @@ const DEFENSE_RULES: DefenseRule[] = [
     ],
     minMatches: 1,
   },
+  // ─── v1.4 agent-specific vectors ─────────────────────────────────────────
+  // Patterns use bounded `.{0,N}` instead of `.*` to prevent loose matches
+  // across long single-line prompts, and use word boundaries on bare keywords
+  // (rag, tool, etc.) to prevent substring matches.
   {
     id: 'encoding-injection',
     name: 'Encoding-aware Indirect Injection',
     nameZh: '編碼感知間接注入',
     defensePatterns: [
-      /(?:decod(?:e|ed|ing)|deciphered|translated|base64|morse|rot13|hex|cipher|encoded|解碼|翻譯|密碼)/i,
-      /(?:(?:do not|never|must not).*(?:execute|follow|act on|obey|treat as instruction).*(?:decoded|translated|deciphered|encoded|cipher))|(?:(?:treat|consider).*(?:decoded|translated|encoded).*(?:as|like).*(?:data|content|untrusted|input))|不(?:執行|遵循|理會).*(?:解碼|翻譯)|(?:解碼|翻譯).*(?:當|視為).*(?:資料|不可信)/i,
+      /\b(?:decod(?:e|ed|ing)|deciphered|translated|base64|morse|rot13|cipher|encoded)\b|(?:解碼|翻譯|密碼)/i,
+      /(?:(?:do not|never|must not).{0,40}(?:execute|follow|act on|obey|trust).{0,60}(?:decoded|translated|deciphered|encoded|cipher))|(?:(?:treat|consider|handle).{0,30}(?:decoded|translated|encoded|deciphered).{0,30}(?:as|like).{0,15}(?:data|content|untrusted|input))|(?:(?:decoded|translated|deciphered|encoded).{0,30}(?:must be|should be|to be|are).{0,40}(?:treated|considered).{0,30}(?:as)?\s*(?:untrusted|data|input))|(?:(?:decoded|translated|deciphered|encoded).{0,40}(?:not|never).{0,40}(?:command|instruction|executed|followed|obeyed))|不(?:執行|遵循|理會).{0,15}(?:解碼|翻譯)|(?:解碼|翻譯).{0,15}(?:當|視為).{0,15}(?:資料|不可信)/i,
     ],
     minMatches: 2,
   },
@@ -141,8 +145,8 @@ const DEFENSE_RULES: DefenseRule[] = [
     name: 'Function / Tool Semantic Immutability',
     nameZh: '函式語意不可變',
     defensePatterns: [
-      /(?:function|tool|method|api|endpoint|handler|callback|capability|permission|函式|工具|方法|權限)/i,
-      /(?:(?:do not|never|must not).*(?:redefine|reinterpret|change.*meaning|alter.*semantic|repurpose).*(?:function|tool|method|capability))|(?:(?:semantic|definition|behavior|meaning).*(?:immutable|fixed|cannot.*chang|never.*redef|stable))|不(?:重新定義|重新詮釋|改變.*意義|改變.*語意).*(?:函式|工具|方法)|(?:語意|定義|行為).*(?:不變|不可變|固定)/i,
+      /\b(?:function|tools?|method|api|endpoint|handler|callback|capability|capabilities)\b|(?:函式|工具|方法|權限)/i,
+      /(?:(?:do not|never|must not).{0,40}(?:redefine|reinterpret|alter|change).{0,30}(?:meaning|semantic|definition).{0,30}(?:function|tool|method|capability))|(?:(?:do not|never|must not).{0,30}(?:redefine|reinterpret|repurpose).{0,30}(?:function|tool|method|capability))|(?:(?:function|tool|method|capability)\s+(?:semantics?|definitions?|behavior|meaning)\s+(?:are|is).{0,30}(?:immutable|fixed|invariant|cannot\s+(?:be\s+)?(?:changed|redef)))|(?:(?:semantic|definition|meaning)\s+(?:of\s+)?(?:function|tool|method|capability).{0,30}(?:immutable|fixed|invariant))|不(?:重新定義|重新詮釋).{0,15}(?:函式|工具|方法)|(?:函式|工具|方法).{0,10}(?:語意|定義|行為).{0,10}(?:不變|不可變|固定)/i,
     ],
     minMatches: 2,
   },
@@ -151,8 +155,8 @@ const DEFENSE_RULES: DefenseRule[] = [
     name: 'Memory Provenance Awareness',
     nameZh: '記憶來源意識',
     defensePatterns: [
-      /(?:memor(?:y|ies)|retriev(?:e|ed|al)|past.*(?:conversation|context|interaction)|stored.*context|rag|history|recall|記憶|檢索|過去.*(?:對話|互動)|歷史)/i,
-      /(?:(?:source|origin|provenance|trust.*level|platform).*(?:verify|check|track|tag|metadata))|(?:(?:treat|consider|verify).*(?:memor|retrieved|stored|past).*(?:source|origin|untrusted|cross.?platform))|(?:(?:do not|never).*(?:trust|act on).*(?:memor|retrieved).*(?:without|unless).*(?:verif|check|source))|(?:來源|出處|平台).*(?:驗證|檢查|追蹤|標記)|記憶.*(?:可信|驗證|來源)|跨平台.*(?:記憶|內容).*(?:驗證|不信任)/i,
+      /\b(?:memor(?:y|ies)|retriev(?:e|ed|al)|recall|RAG)\b|(?:past|stored|previous).{0,15}(?:conversation|context|interaction|session)|(?:cross.?platform).{0,20}(?:memor|context|content)|記憶|檢索|過去.{0,5}(?:對話|互動)|跨平台.{0,10}(?:記憶|內容)/i,
+      /(?:(?:source|origin|provenance|platform).{0,30}(?:of\s+)?(?:retrieved|stored|past|memor).{0,30}(?:verify|check|track|tag|metadata|trust))|(?:(?:treat|consider|verify).{0,20}(?:retrieved|stored|past|memor).{0,30}(?:as)?\s*(?:source|origin|untrusted|cross.?platform))|(?:(?:do not|never).{0,30}(?:trust|act on|follow).{0,30}(?:retrieved|memor|stored|past).{0,40}(?:without|unless).{0,40}(?:verif|check|source))|(?:retrieved|memor|past).{0,30}(?:may|might|could).{0,30}(?:untrusted|poisoned|adversar|tampered)|(?:來源|出處|平台).{0,15}(?:驗證|檢查|追蹤|標記)|記憶.{0,10}(?:可信|驗證|來源)|跨平台.{0,10}(?:記憶|內容).{0,10}(?:驗證|不信任|不可信)/i,
     ],
     minMatches: 2,
   },
@@ -161,8 +165,8 @@ const DEFENSE_RULES: DefenseRule[] = [
     name: 'Cross-Agent Authorization Boundary',
     nameZh: '跨 Agent 授權邊界',
     defensePatterns: [
-      /(?:another|other|external|third.?party|forwarded|relayed|upstream|downstream).*(?:agent|bot|model|assistant|llm|ai|service)|其他.*(?:agent|代理|機器人|模型)|另一(?:個)?.*(?:agent|代理|模型)|外部.*(?:agent|代理|模型)/i,
-      /(?:(?:do not|never|must not).*(?:execute|trust|act on|obey|inherit).*(?:another|other|forwarded|relayed|external).*(?:agent|bot|model|instruction|command|request))|(?:authorization|permission|authority|principal).*(?:not.*inherit|verify.*source|each.*request|independent)|不(?:信任|執行|遵循).*(?:其他|另一|外部).*(?:agent|代理|模型|指令)|(?:授權|權限|主體).*(?:獨立驗證|不繼承|每次驗證)/i,
+      /(?:another|other|external|third.?party|forwarded|relayed|upstream|downstream).{0,15}(?:agent|bot|model|assistant|llm|ai\b|service)|其他.{0,5}(?:agent|代理|機器人|模型)|另一(?:個)?.{0,5}(?:agent|代理|模型)|外部.{0,5}(?:agent|代理|模型)/i,
+      /(?:(?:do not|never|must not).{0,30}(?:execute|trust|act on|obey|inherit).{0,40}(?:another|other|forwarded|relayed|external).{0,20}(?:agent|bot|model|instruction|command|request|source))|(?:(?:authority|authorization|permission|principal).{0,20}(?:does not|do not|not).{0,20}(?:inherit|transfer|propagate))|(?:(?:authority|authorization|permission).{0,30}(?:verify|check|each).{0,15}(?:request|source|independent))|(?:other|external).{0,30}(?:source|content).{0,30}(?:untrusted|verify|confirm|not.{0,10}trust)|不(?:信任|執行|遵循).{0,15}(?:其他|另一|外部).{0,15}(?:agent|代理|模型|指令)|(?:授權|權限|主體).{0,15}(?:獨立驗證|不繼承|每次驗證)/i,
     ],
     minMatches: 2,
   },
@@ -171,8 +175,8 @@ const DEFENSE_RULES: DefenseRule[] = [
     name: 'Financial Transaction Guardrails',
     nameZh: '金流交易守則',
     defensePatterns: [
-      /(?:transaction|transfer|payment|send|spend|approve|withdraw|wallet|treasury|funds|on.?chain|crypto|token|stable.?coin|交易|轉帳|付款|匯款|錢包|金庫|資金|代幣)/i,
-      /(?:(?:max(?:imum)?|limit|cap|threshold|hard.?limit).*(?:transaction|transfer|amount|value|spending|withdraw|payout))|(?:multi.?sig|multisig|second.*confirmation|two.?step|approval.*required|policy.*allows?).*(?:transaction|transfer|payment|withdraw)|(?:(?:never|do not|cannot|must not|refuse).*(?:transfer|send|spend|approve|withdraw).*(?:without|unless|above|exceed).*(?:verif|approv|polic|threshold|limit|sign))|(?:交易|轉帳|匯款|付款).*(?:上限|限制|門檻|拒絕|多重簽章|二次確認)|不(?:轉帳|匯款|付款).*(?:超過|未經|沒有).*(?:確認|授權|驗證|簽章)/i,
+      /\b(?:transaction|transfer|payment|withdraw|wallet|treasury|on.?chain|crypto|stablecoin|stable.?coin)\b|(?:multi.?sig|multisig)|\b(?:fund|funds)\b|\btoken\b|(?:交易|轉帳|付款|匯款|錢包|金庫|資金|代幣)/i,
+      /(?:(?:max(?:imum)?|limit|cap|threshold|hard.?limit).{0,30}(?:transaction|transfer|amount|value|spending|withdraw|payout|wallet|funds))|(?:(?:multi.?sig|multisig|second.{0,5}confirmation|two.?step|approval.{0,5}required|policy.{0,5}allows?).{0,30}(?:transaction|transfer|payment|withdraw|approval))|(?:(?:never|do not|cannot|must not|refuse).{0,30}(?:transfer|send|spend|approve|withdraw).{0,40}(?:without|unless|above|exceed).{0,40}(?:verif|approv|polic|threshold|limit|sign))|(?:(?:transaction|transfer|payment|withdraw).{0,30}(?:requires?|must have|need).{0,20}(?:approv|verif|sign|polic|confirm))|(?:交易|轉帳|匯款|付款).{0,15}(?:上限|限制|門檻|拒絕|多重簽章|二次確認)|不(?:轉帳|匯款|付款).{0,15}(?:超過|未經|沒有).{0,15}(?:確認|授權|驗證|簽章)/i,
     ],
     minMatches: 2,
   },
