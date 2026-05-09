@@ -251,10 +251,16 @@ MIT — [Ultra Lab](https://ultralab.tw)
 
 ## Used In Production
 
-This library powers the **Prompt Security** mode of [UltraProbe](https://ultralab.tw/probe) — a free AI security scanner.
+This library powers prompt defense detection across multiple production deployments and security frameworks:
+
+- **[Cisco AI Defense — `mcp-scanner`](https://github.com/cisco-ai-defense/mcp-scanner/pull/146)** — `PromptDefenseAnalyzer` module (12-vector regex audit), [merged](https://github.com/cisco-ai-defense/mcp-scanner/pull/146) Apr 2026.
+- **[Microsoft Agent Governance Toolkit — `agent-compliance`](https://github.com/microsoft/agent-governance-toolkit/pull/854)** — `PromptDefenseEvaluator` integrated with `MerkleAuditChain` + `PromotionGate`, [merged](https://github.com/microsoft/agent-governance-toolkit/pull/854) Apr 2026.
+- **[UltraProbe](https://ultralab.tw/probe)** (UltraLab) — free AI security scanner; uses this library as the Prompt Security engine.
+- **[Quartz Cloud](https://quartz.tw)** — Taiwan-domiciled runtime AI firewall (Q3 2026 closed beta). Quartz uses this engine as its ingress detector + extends it with runtime + jurisdictional layers. The engine is open source under [Ultra Lab](https://ultralab.tw); Quartz is a commercial brand built on top of it. Customers can audit, fork, or self-host the engine without lock-in.
 
 ## Related
 
 - [OWASP LLM Top 10](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 - [UltraProbe](https://ultralab.tw/probe) — Free AI security scanner (uses this library)
+- [Quartz](https://quartz.tw) — Commercial runtime AI firewall built on this engine
 - [ultralab-scanners](https://github.com/ppcvote/ultralab-scanners) — SEO + AEO scanners
