@@ -221,6 +221,19 @@ A pass on this scanner is necessary, not sufficient. See [CASE_STUDIES.md](./CAS
 - False positives/negatives are possible. See [research data](https://github.com/ppcvote/prompt-defense-audit/blob/master/research/gap-20260405.json) for calibration details.
 - Fullwidth CJK punctuation (e.g. `，`) triggers Unicode detection — known limitation.
 
+## Complementary tools
+
+`prompt-defense-audit` is a **static, design-time** check. It pairs cleanly with runtime-side projects that detect attacks as they happen:
+
+| Lifecycle stage | Tool | Question it answers |
+|---|---|---|
+| Build / CI gate | `prompt-defense-audit` (this) | "Is the prompt designed to resist attacks?" |
+| Runtime detection | [Agent-Threat-Rule (ATR)](https://github.com/Agent-Threat-Rule/agent-threat-rules) | "Is an attack happening right now?" |
+
+Failure modes are orthogonal: the audit misses novel attacks not anticipated at design time; ATR misses prompts that have no resistance even before traffic arrives. Used together they form a defense-in-depth pattern (CI gate → runtime detection).
+
+Detailed integration including the 1:N vector mapping (20 defense vectors → 9 ATR detection categories), recommended usage pattern, and cross-references: [`docs/integrations/agent-threat-rules.md`](docs/integrations/agent-threat-rules.md).
+
 ## Research
 
 This tool is backed by empirical analysis of 1,646 production system prompts from 4 public datasets:
