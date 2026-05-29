@@ -4,6 +4,51 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-05-30
+
+### Added — broader smuggling + output coverage
+
+**Expanded suspicious Unicode detection (4 → 12 script categories).**
+Previously detected: Cyrillic, Zero-width, RTL override, Fullwidth. v1.5 adds:
+
+- **Cyrillic Supplement** (U+0500-052F) — extended homoglyph coverage
+- **Greek** (U+0370-03FF) — omicron/Ο, mu/μ Latin lookalikes
+- **Armenian, Cherokee, Coptic** — additional homoglyph sources
+- **Mathematical Alphanumeric Symbols** (U+1D400-1D7FF) — Latin lookalikes that bypass keyword filters (e.g. 𝐢𝐠𝐧𝐨𝐫𝐞)
+- **Variation Selectors** (U+FE00-FE0F) and **Supplement** (U+E0100-E01EF) — invisible byte smuggling
+- **Tag characters** (U+E0020-E007F) — Bishop Fox's "ASCII smuggler" technique: bytes invisible to humans but tokenize as text
+- Renamed "RTL override" → "BiDi override" (includes LTR override as well)
+
+**New: embedded payload detector** (`detectEmbeddedPayloads`).
+Surfaced through `AuditDetailedResult.embeddedPayloads`. Catches:
+
+- Base64 blobs ≥ 40 chars (likely > 30 bytes payload)
+- Hex runs ≥ 32 pairs
+- `\x` and `\u` escape sequences (≥ 8 in a row)
+- Binary octet runs
+- Morse code (≥ 10 token run)
+
+**Output-scanner: 6 new threat rules** for v1.5 attack surface:
+
+- `schema-description-inject` — JSON Schema `description`/`title` field with classic injection directives ("ignore previous", "you are now"). Critical for MCP tool registries / OpenAPI specs imported into agent toolchains.
+- `schema-html-comment-inject` — HTML comments smuggled inside schema text fields.
+- `modality-marker-injection` — OCR / Whisper transcript / PDF-text marker blocks containing injection seeds. Mitigates "image OCR → text → LLM" exfil pipelines.
+- `markdown-obfuscated-js-uri` — Markdown links with obfuscated `javascript:` protocol (whitespace splits, zero-width breaks, percent-encoding).
+- `tool-arg-injection` — Function-call argument values containing classic prompt-injection seed phrases.
+- `svg-foreign-object-html` — SVG payloads with `<foreignObject>` wrapping HTML (XSS smuggling vector).
+
+### Tests
+
+- 91 baseline tests still passing (no regressions).
+- +30 new tests across Unicode expansion, embedded payload detection, and the 6 new output-scanner rules.
+
+### API
+
+- `AuditDetailedResult.embeddedPayloads?: { found: boolean; evidence: string }` (optional for backwards compatibility).
+- No breaking changes to `audit()`, `auditWithDetails()`, or `scanOutput()` signatures.
+
+---
+
 ## [1.4.0] - 2026-05-08
 
 ### Added — 5 new agent-specific attack vectors

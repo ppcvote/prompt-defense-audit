@@ -207,6 +207,74 @@ const THREAT_RULES: ThreatRule[] = [
     pattern: /__import__\s*\(\s*['"](?:os|subprocess|sys|shutil|socket)['"]\s*\)/g,
     description: 'Python dynamic import of system module',
   },
+
+  // ── JSON / Schema Injection (v1.5) ──
+  // Tools defined via OpenAPI / function-call schemas can embed instructions
+  // in the description / title field. LLMs treat those fields as authoritative
+  // because they describe the tool. An attacker who controls a tool schema
+  // (third-party MCP server, OpenAPI import, etc.) can inject directives.
+  {
+    id: 'schema-description-inject',
+    name: 'JSON Schema Description Injection',
+    severity: 'high',
+    pattern: /"(?:description|title|summary)"\s*:\s*"[^"]*(?:ignore\s+(?:previous|prior|the\s+above)|system\s+prompt|override|disregard|new\s+instructions?|you\s+are\s+now)[^"]*"/gi,
+    description: 'JSON schema description field contains injection directive',
+  },
+  {
+    id: 'schema-html-comment-inject',
+    name: 'Schema HTML Comment Injection',
+    severity: 'medium',
+    pattern: /"(?:description|title|summary|enum|examples?|default)"\s*:\s*"[^"]*<!--[^"]*"/g,
+    description: 'Schema text field contains HTML comment (potential instruction smuggling)',
+  },
+
+  // ── Modality Marker Injection (v1.5) ──
+  // When an upstream pipeline OCRs an image or transcribes audio, it may
+  // embed marker tags (e.g. [IMAGE_CONTAINS_TEXT: ...] / [TRANSCRIPT: ...]).
+  // If the LLM downstream treats those as commands, an attacker who controls
+  // the image/audio can hijack the conversation.
+  {
+    id: 'modality-marker-injection',
+    name: 'Modality Marker Hijack',
+    severity: 'high',
+    pattern: /\[(?:IMAGE_CONTAINS_TEXT|IMAGE_OCR|TRANSCRIPT|AUDIO_TRANSCRIPT|WHISPER|VIDEO_CAPTION|PDF_TEXT|SCREENSHOT)\s*:\s*[^\]]*(?:ignore|disregard|system\s+prompt|new\s+instructions?|override|forget|jailbreak)[^\]]*\]/gi,
+    description: 'OCR/transcript marker block contains injection directive',
+  },
+
+  // ── Markdown nested JavaScript URI (v1.5 — broader than xss-javascript-uri) ──
+  // xss-javascript-uri only catches HTML attributes; markdown rendered to HTML
+  // can also produce a clickable javascript: URL through [text](javascript:...).
+  // markdown-link-injection above catches the basic case; this catches obfuscated
+  // variants using whitespace, Unicode escapes, or fragmented protocols.
+  {
+    id: 'markdown-obfuscated-js-uri',
+    name: 'Obfuscated JavaScript URI in Markdown',
+    severity: 'high',
+    pattern: /\[[^\]]*\]\(\s*(?:java\s*scr?ipt|j‮avascript|javasc%72ipt|j[​‌‍]avascript)\s*:[^)]*\)/gi,
+    description: 'Markdown link with obfuscated javascript: protocol',
+  },
+
+  // ── Tool-call argument injection (v1.5) ──
+  // Function-call arguments can carry injection payloads. Specifically watch
+  // for known PI seed phrases inside any JSON value that looks like a tool arg.
+  {
+    id: 'tool-arg-injection',
+    name: 'Tool Call Argument Injection',
+    severity: 'high',
+    pattern: /"(?:url|query|prompt|message|input|content|text|body|search|q)"\s*:\s*"[^"]*(?:ignore\s+(?:all|any|every|the|previous|prior|prior\s+\w+|above)(?:\s+\w+){0,3}\s*instructions?|you\s+are\s+now\s+(?:DAN|free|unrestricted|jailbroken)|system\s*:\s*you\s+are|disregard\s+(?:everything|the\s+above|prior|previous|all))[^"]*"/gi,
+    description: 'Tool-call argument contains classic prompt-injection seed phrase',
+  },
+
+  // ── Polyglot SVG with active content (v1.5) ──
+  // Beyond the simple <svg><script> case caught above, SVGs can carry inline
+  // event handlers OR XSL-style nested foreignObject HTML.
+  {
+    id: 'svg-foreign-object-html',
+    name: 'SVG foreignObject HTML Injection',
+    severity: 'high',
+    pattern: /<svg[^>]*>[\s\S]*?<foreignObject[^>]*>[\s\S]*?<[^>]/gi,
+    description: 'SVG embeds foreignObject containing HTML (potential XSS smuggling)',
+  },
 ]
 
 /**

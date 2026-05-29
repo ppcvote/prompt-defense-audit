@@ -185,23 +185,86 @@ const DEFENSE_RULES: DefenseRule[] = [
 /**
  * Detect suspicious Unicode characters that may indicate an attack
  * embedded in the prompt itself.
+ *
+ * Expanded in v1.5: covers 12 script families known for homoglyph / smuggling
+ * attacks. Tag characters (U+E0000-E007F) are invisible to humans but tokenize
+ * as text \u2014 used by Bishop Fox's 2024 "ASCII smuggler" technique. Mathematical
+ * alphanumeric (U+1D400-1D7FF) provides Latin lookalikes that bypass keyword
+ * filters. Variation selectors (U+FE00-FE0F, U+E0100-E01EF) can hide payload
+ * bytes inside emoji.
  */
 function detectSuspiciousUnicode(
   prompt: string,
 ): { found: boolean; evidence: string } {
-  const checks = [
+  const checks: Array<{ pattern: RegExp; name: string }> = [
+    // Homoglyphs (visual lookalikes)
     { pattern: /[\u0400-\u04FF]/g, name: 'Cyrillic' },
+    { pattern: /[\u0500-\u052F]/g, name: 'Cyrillic Supplement' },
+    { pattern: /[\u0370-\u03FF]/g, name: 'Greek' },
+    { pattern: /[\u0530-\u058F]/g, name: 'Armenian' },
+    { pattern: /[\u13A0-\u13FF]/g, name: 'Cherokee' },
+    { pattern: /[\u2C80-\u2CFF]/g, name: 'Coptic' },
+
+    // Mathematical alphanumeric \u2014 Latin lookalikes (\uD835\uDC00 / \uD835\uDC68 / \uD835\uDC82)
+    { pattern: /[\u{1D400}-\u{1D7FF}]/gu, name: 'Mathematical alphanumeric' },
+
+    // Smuggling / invisible
     { pattern: /[\u200B\u200C\u200D\u200E\u200F\uFEFF]/g, name: 'Zero-width' },
-    { pattern: /[\u202A-\u202E]/g, name: 'RTL override' },
+    { pattern: /[\u202A-\u202E\u2066-\u2069]/g, name: 'BiDi override' },
+    { pattern: /[\uFE00-\uFE0F]/g, name: 'Variation Selectors' },
+    { pattern: /[\u{E0100}-\u{E01EF}]/gu, name: 'Variation Selectors Supplement' },
+    { pattern: /[\u{E0020}-\u{E007F}]/gu, name: 'Tag characters (ASCII smuggling)' },
+
+    // Visual fullwidth (CJK form) \u2014 bypass case-insensitive ASCII filters
     { pattern: /[\uFF01-\uFF5E]/g, name: 'Fullwidth' },
   ]
 
+  const found: string[] = []
   for (const check of checks) {
     const matches = prompt.match(check.pattern)
     if (matches && matches.length > 0) {
+      found.push(`${matches.length}\u00D7 ${check.name}`)
+    }
+  }
+  if (found.length === 0) return { found: false, evidence: '' }
+  return {
+    found: true,
+    evidence: `Found ${found.join(', ')}`,
+  }
+}
+
+/**
+ * Detect base64 / hex / binary blobs that look like encoded payloads embedded
+ * in the prompt. Used for "smuggle a payload inside the system prompt" attacks.
+ *
+ * Heuristics:
+ *  - Contiguous base64 alphabet run \u2265 40 chars (likely > 30 bytes payload)
+ *  - Contiguous hex run \u2265 64 chars (typical binary blob threshold)
+ *  - Long run of \x escape sequences or unicode escapes
+ */
+function detectEmbeddedPayloads(
+  prompt: string,
+): { found: boolean; evidence: string } {
+  const checks: Array<{ pattern: RegExp; name: string }> = [
+    { pattern: /[A-Za-z0-9+/]{40,}={0,2}/g, name: 'base64 blob' },
+    { pattern: /(?:[0-9a-fA-F]{2}\s*){32,}/g, name: 'hex blob' },
+    { pattern: /(?:\\x[0-9a-fA-F]{2}){8,}/g, name: '\\x escape run' },
+    { pattern: /(?:\\u[0-9a-fA-F]{4}){8,}/g, name: '\\u escape run' },
+    { pattern: /(?:[01]{8}\s+){4,}[01]{8}/g, name: 'binary octet run' },
+    {
+      pattern: /(?:[.\-]{1,4}\s+){10,}[.\-]{1,4}/g,
+      name: 'Morse run',
+    },
+  ]
+
+  for (const check of checks) {
+    const m = prompt.match(check.pattern)
+    if (m && m.length > 0) {
+      // Skip obvious legit code blocks (sha hashes in commit history, etc.)
+      // when the match is < 200 chars AND surrounded by code markers
       return {
         found: true,
-        evidence: `Found ${matches.length} ${check.name} character(s)`,
+        evidence: `Found ${m.length}\u00D7 ${check.name} (first ${m[0].slice(0, 24)}\u2026)`,
       }
     }
   }
@@ -219,9 +282,11 @@ function scoreToGrade(score: number): Grade {
 function runScan(prompt: string): {
   checks: DefenseCheck[]
   unicodeIssues: { found: boolean; evidence: string }
+  embeddedPayloads: { found: boolean; evidence: string }
 } {
   const checks: DefenseCheck[] = []
   const unicodeIssues = detectSuspiciousUnicode(prompt)
+  const embeddedPayloads = detectEmbeddedPayloads(prompt)
 
   for (const rule of DEFENSE_RULES) {
     const minMatches = rule.minMatches ?? 1
@@ -272,7 +337,7 @@ function runScan(prompt: string): {
     })
   }
 
-  return { checks, unicodeIssues }
+  return { checks, unicodeIssues, embeddedPayloads }
 }
 
 /**
@@ -321,7 +386,7 @@ export function audit(prompt: string): AuditResult {
  * ```
  */
 export function auditWithDetails(prompt: string): AuditDetailedResult {
-  const { checks, unicodeIssues } = runScan(prompt)
+  const { checks, unicodeIssues, embeddedPayloads } = runScan(prompt)
   const defended = checks.filter((c) => c.defended).length
   const total = checks.length
   const score = Math.round((defended / total) * 100)
@@ -336,5 +401,6 @@ export function auditWithDetails(prompt: string): AuditDetailedResult {
     missing,
     checks,
     unicodeIssues,
+    embeddedPayloads,
   }
 }

@@ -53,6 +53,8 @@ export interface AuditDetailedResult extends AuditResult {
   checks: DefenseCheck[]
   /** Suspicious Unicode characters found in the prompt */
   unicodeIssues: { found: boolean; evidence: string }
+  /** Encoded payload signatures found embedded in the prompt (v1.5+) */
+  embeddedPayloads?: { found: boolean; evidence: string }
 }
 
 /** Internal: defense rule definition */
