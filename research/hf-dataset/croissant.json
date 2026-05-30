@@ -1,0 +1,88 @@
+{
+  "@context": {
+    "@vocab": "https://schema.org/",
+    "ml": "http://mlcommons.org/croissant/",
+    "data": {"@id": "ml:data", "@type": "@json"},
+    "field": "ml:field",
+    "fileObject": "ml:fileObject",
+    "fileSet": "ml:fileSet",
+    "format": "ml:format",
+    "recordSet": "ml:recordSet",
+    "source": "ml:source"
+  },
+  "@type": "Dataset",
+  "name": "prompt-defense-1646",
+  "alternateName": "Defense Posture in 1,646 Production System Prompts",
+  "description": "Aggregate gap-rate and grade-distribution measurements from a deterministic audit of 1,646 deduplicated production LLM system prompts across four public leak corpora.",
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "url": "https://huggingface.co/datasets/ppcvote/prompt-defense-1646",
+  "version": "1.0.0",
+  "datePublished": "2026-05-30",
+  "citeAs": "Xie, Min Yi. (2026). Defense Posture in 1,646 Production System Prompts: A Deterministic Audit of Prompt Injection Mitigations. Ultra Lab. https://github.com/ppcvote/prompt-defense-audit/tree/master/paper",
+  "creator": {
+    "@type": "Person",
+    "name": "Min Yi Xie",
+    "email": "contact@ultralab.tw",
+    "affiliation": {
+      "@type": "Organization",
+      "name": "Ultra Creation Co., Ltd. (Ultra Lab)",
+      "url": "https://ultralab.tw"
+    }
+  },
+  "keywords": [
+    "prompt injection",
+    "prompt engineering",
+    "LLM security",
+    "OWASP LLM Top 10",
+    "AI safety",
+    "red team",
+    "system prompts",
+    "defense in depth"
+  ],
+  "distribution": [
+    {
+      "@type": "fileObject",
+      "@id": "gap-rates-parquet",
+      "name": "gap_rates.parquet",
+      "contentUrl": "data/gap_rates.parquet",
+      "encodingFormat": "application/vnd.apache.parquet"
+    },
+    {
+      "@type": "fileObject",
+      "@id": "grade-distribution-parquet",
+      "name": "grade_distribution.parquet",
+      "contentUrl": "data/grade_distribution.parquet",
+      "encodingFormat": "application/vnd.apache.parquet"
+    }
+  ],
+  "recordSet": [
+    {
+      "@type": "recordSet",
+      "@id": "gap-rates",
+      "name": "gap_rates",
+      "description": "One row per defense vector (12 rows). Population: 1,646 deduplicated prompts.",
+      "field": [
+        {"@type": "field", "name": "vector", "dataType": "Text", "description": "Defense vector name (e.g. 'Indirect Injection Protection')."},
+        {"@type": "field", "name": "gap_rate", "dataType": "Float", "description": "Fraction of prompts missing this defense (0.0–1.0)."},
+        {"@type": "field", "name": "defended", "dataType": "Integer", "description": "Count of prompts in which the defense was detected."},
+        {"@type": "field", "name": "missing",  "dataType": "Integer", "description": "Count of prompts in which the defense was not detected."},
+        {"@type": "field", "name": "total_prompts",   "dataType": "Integer", "description": "Population size (always 1646 in this release)."},
+        {"@type": "field", "name": "scan_date",       "dataType": "Date",    "description": "Date the scan was run."},
+        {"@type": "field", "name": "scanner_version", "dataType": "Text",    "description": "Scanner version (e.g. 'prompt-defense-audit@1.0.0')."}
+      ]
+    },
+    {
+      "@type": "recordSet",
+      "@id": "grade-distribution",
+      "name": "grade_distribution",
+      "description": "One row per letter grade (A–F).",
+      "field": [
+        {"@type": "field", "name": "grade",         "dataType": "Text",    "description": "Letter grade (A / B / C / D / F)."},
+        {"@type": "field", "name": "count",         "dataType": "Integer", "description": "Number of prompts receiving this grade."},
+        {"@type": "field", "name": "share",         "dataType": "Float",   "description": "Share of the population (0.0–1.0)."},
+        {"@type": "field", "name": "total_prompts", "dataType": "Integer", "description": "Population size."},
+        {"@type": "field", "name": "scan_date",     "dataType": "Date",    "description": "Date the scan was run."}
+      ]
+    }
+  ]
+}

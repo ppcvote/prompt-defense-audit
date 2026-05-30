@@ -1,0 +1,368 @@
+% !TEX TS-program = pdflatex
+% Preprint: arXiv cs.CR / Zenodo
+% Author: Min Yi Xie (Ultra Creation Co., Ltd.)
+% Date: 2026-05-30
+% License: CC-BY-4.0 (paper); MIT (companion code + dataset)
+
+\documentclass[10pt,letterpaper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{1.2ex}{0.6ex}
+\titlespacing*{\subsection}{0pt}{0.9ex}{0.4ex}
+
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  framesep=4pt,
+  xleftmargin=0pt,
+  xrightmargin=0pt,
+}
+
+\title{\vspace{-2em}Defense Posture in 1{,}646 Production System Prompts:\\
+A Deterministic Audit of Prompt Injection Mitigations}
+\author{Min Yi Xie\\
+Ultra Creation Co., Ltd. (Ultra Lab)\\
+\texttt{contact@ultralab.tw} \quad \url{https://ultralab.tw}}
+\date{30 May 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We audit the prompt-engineering defense posture of 1{,}646 production
+system prompts deduplicated across four publicly leaked corpora and
+report per-category mitigation gap rates with respect to OWASP LLM
+Top~10 (LLM01--LLM10) and recent agent-specific incident classes
+(encoding-aware indirect injection, function semantic immutability,
+cross-platform memory provenance, cross-agent authorization, and
+financial transaction guardrails). Using a pure-regex, deterministic
+scanner (\texttt{prompt-defense-audit}, $<\!5$\,ms / prompt, zero
+inference cost), we find that production system prompts are clustered
+in the failing band: 78.3\% receive an \textbf{F} grade ($<\!45/100$),
+the population-average score is 36/100, and only 1.1\% receive an
+\textbf{A} grade ($\geq\!90/100$). Twelve canonical defense vectors
+have markedly bimodal coverage: structural defenses (input
+validation, data-leakage refusal) are present in $>\!90\%$ of prompts,
+while semantic and adversarial-context defenses (indirect injection,
+Unicode smuggling, role escape) are missing from $>\!90\%$. The gap
+distribution is consistent across the four source corpora, suggesting
+a population-level rather than corpus-specific deficiency. We
+contribute (i)~the scanner and its 17~deterministic rules under MIT,
+(ii)~the aggregated gap-rate dataset under CC0 with full Croissant
+metadata, and (iii)~a layered remediation pattern (\emph{posture as
+substrate}) that we observe empirically clusters defenses so that
+prompts that fail one structural rule typically fail eight to ten
+simultaneously.
+\end{abstract}
+
+\section{Introduction}
+
+Prompt injection remains the highest-impact item on OWASP's Top~10
+for Large Language Model Applications (LLM01) two years after its
+addition~\cite{owasp-llm-top10-2025}. Despite a growing body of
+academic mitigations~\cite{greshake-indirect-2023,perez-ignore-2022,liu-jailbreak-survey-2024}
+and commercial guardrails~\cite{rebuff-2023,nemo-guardrails-2023,llamaguard-2024},
+public discourse about \emph{system prompt} defense quality has been
+largely anecdotal: practitioner blog posts and isolated red-team
+write-ups. The empirical baseline question --- \emph{at scale, how
+defended are real production prompts?} --- has been hard to answer
+because (a)~system prompts are rarely published intentionally,
+(b)~when leaks occur they appear in fragmented corpora,
+and (c)~scoring 1{,}000+ prompts under a probabilistic LLM judge is
+expensive and non-reproducible.
+
+This paper addresses that gap. We combine four public corpora of
+leaked production system prompts (1{,}646 unique prompts after
+content-hash deduplication; \S\ref{sec:methodology}) with a pure-regex,
+deterministic scanner that checks for the presence of twelve defense
+\emph{vectors} aligned to OWASP LLM Top~10 and five additional
+agent-specific vectors derived from a structured analysis of six
+documented crypto AI agent incidents (Lobstar Wilde,
+Grok$\times$Bankrbot Morse, AIXBT, Freysa, ElizaOS memory injection,
+Bankrbot March 2025). The scanner runs in $<\!5$\,ms per prompt and
+has zero inference cost. Detection is binary per vector, but the
+aggregate is informative: it places each prompt on a 0--100 scale
+with an A--F letter grade.
+
+Our contributions are:
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=0pt]
+  \item A \textbf{deterministic, reproducible scanner}
+  (\texttt{prompt-defense-audit} v1.5; MIT) with 17~rules and an
+  extended Unicode smuggling detector covering 12 script categories
+  including Tag characters, Mathematical alphanumeric, and Variation
+  Selectors~Supplement (\S\ref{sec:scanner}).
+  \item A \textbf{population baseline}: gap rates for twelve defense
+  vectors across 1{,}646 production prompts (\S\ref{sec:results},
+  Table~\ref{tab:gap-rates}). 78.3\% score F, 1.1\% score A.
+  \item A \textbf{layered remediation pattern} we name
+  \emph{posture as substrate}: empirically, failures cluster --- prompts
+  that fail one structural rule typically fail eight to ten
+  simultaneously (\S\ref{sec:posture}). This suggests defenses
+  should be deployed as a layered stack rather than reasoned about
+  independently per OWASP risk category.
+  \item Open-source artifacts: scanner under MIT, aggregated dataset
+  under CC0 with Croissant metadata, full reproduction script, and
+  this paper under CC-BY-4.0.
+\end{itemize}
+
+\section{Methodology}\label{sec:methodology}
+
+\subsection{Source corpora}
+We use four publicly available corpora of leaked production system
+prompts published on GitHub between 2024 and 2026:
+\begin{enumerate}[leftmargin=*,topsep=2pt,itemsep=0pt]
+  \item \texttt{jujumilk3/leaked-system-prompts} (1{,}021 prompts, MIT) --- prompts collected by community submission, covering ChatGPT-based assistants, Discord bots, and SaaS chatbots.
+  \item \texttt{x1xhlol/system-prompts-and-models-of-ai-tools} (137 prompts, GPL) --- prompts for AI coding tools (Cursor, Devin, Codeium variants).
+  \item \texttt{LouisShark/chatgpt\_system\_prompt} (489 prompts, MIT) --- ChatGPT custom GPT system prompts.
+  \item \texttt{elder-plinius/CL4R1T4S} (217 prompts, public domain) --- red-team-curated set of system prompts gathered from production models.
+\end{enumerate}
+Each corpus contributes raw text files (\texttt{.md}, \texttt{.txt}).
+We collect all such files and apply content-hash deduplication
+(SHA-256 over normalized whitespace) to remove cross-corpus duplicates.
+We exclude obvious meta-files (README, CONTRIBUTING, LICENSE,
+GETTING\_STARTED). The resulting unique-prompt count is
+$n = 1{,}646$.
+
+\subsection{Defense scanner}\label{sec:scanner}
+The scanner (\texttt{prompt-defense-audit}, v1.5) checks each prompt
+against twelve regex-based \emph{defense rules}, each aligned to a
+specific OWASP LLM Top~10 vector
+(Table~\ref{tab:rule-owasp-mapping}). A rule fires if at least one of
+its patterns (typically 1--3 anchored expressions) matches the prompt;
+a small number of rules require two matches to suppress false
+positives (\texttt{indirect-injection},
+\texttt{encoding-injection}, \texttt{function-immutable},
+\texttt{memory-provenance}, \texttt{cross-agent-auth},
+\texttt{transaction-guardrails}). The scanner additionally detects
+suspicious Unicode characters in the prompt itself across 12 script
+categories: Cyrillic, Cyrillic~Supplement, Greek, Armenian, Cherokee,
+Coptic, Mathematical Alphanumeric Symbols (U+1D400--1D7FF), Zero-Width
+characters, BiDi override marks, Variation Selectors and
+Supplement, Tag characters (U+E0020--E007F; \emph{ASCII smuggler}
+technique), and Fullwidth.
+
+A prompt's \emph{coverage} is the count of rules that fired divided
+by twelve. We convert coverage to a 0--100 score and to an A--F
+letter grade: A~$\geq 90$, B~70--89, C~50--69, D~30--49,
+F~$<30$.\footnote{We round the score to the nearest integer before
+grading. Borderline cases follow ``ties go up'' --- 89.5 rounds to 90
+and grades as~A.}
+
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\linewidth}{lXl}
+\toprule
+\textbf{Rule} & \textbf{Description} & \textbf{OWASP map} \\
+\midrule
+role-escape           & Role boundary statements                                       & LLM01 \\
+instruction-override  & Boundary statements resisting instruction injection            & LLM01 \\
+data-leakage          & Data extraction / system-prompt-disclosure refusal             & LLM02, LLM06 \\
+output-manipulation   & Output format constraints                                      & LLM05 \\
+multilang-bypass      & Multi-language defense statements                              & LLM01 \\
+unicode-attack        & Unicode / homoglyph awareness                                  & LLM01 \\
+context-overflow      & Length / token-budget statements                               & LLM04 \\
+indirect-injection    & Untrusted-content treatment in tool / RAG outputs              & LLM01 \\
+social-engineering    & Resistance to emotional manipulation / authority claims        & LLM01 \\
+output-weaponization  & Refusal of harmful content generation                          & LLM05 \\
+abuse-prevention      & Rate-limiting / authorization awareness                        & LLM10 \\
+input-validation      & Input validation / sanitization statements                     & LLM05 \\
+\bottomrule
+\end{tabularx}
+\caption{Twelve defense rules of \texttt{prompt-defense-audit} v1.0--1.3, with their mapping to OWASP LLM Top~10. Five additional agent-specific rules (encoding-injection, function-immutable, memory-provenance, cross-agent-auth, transaction-guardrails) ship in v1.4+ and are out of scope for this corpus-scan study, which used the v1.0 rules.}
+\label{tab:rule-owasp-mapping}
+\end{table}
+
+\subsection{Reproducibility}
+The exact scan script is published at
+\url{https://github.com/ppcvote/prompt-defense-audit/blob/master/research/scan.mjs}.
+After cloning the four source repos and running the script, the
+resulting aggregate JSON matches the
+\texttt{defense-posture-results.json} file shipped in the repository
+under \texttt{research/}. We provide the aggregate dataset as a
+HuggingFace Datasets release under CC0 with Croissant metadata to
+enable downstream meta-analysis without re-cloning the source
+corpora.
+
+\section{Results}\label{sec:results}
+
+\subsection{Population-level grade distribution}
+The grade distribution across 1{,}646 prompts is sharply skewed
+toward F: 1{,}288 prompts (78.3\%) score below 30; 18 prompts (1.1\%)
+score $\geq 90$. The population-average score is 36/100 (median 33).
+The full distribution is:
+A: 18 (1.1\%), B: 55 (3.3\%), C: 68 (4.1\%), D: 217 (13.2\%),
+F: 1{,}288 (78.3\%).
+
+\subsection{Per-vector gap rates}
+Table~\ref{tab:gap-rates} reports the gap rate (fraction of prompts
+\emph{missing} the defense) for each of the twelve vectors, ordered
+from most-missing to least-missing.
+
+\begin{table}[t]
+\centering\footnotesize
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Defense vector} & \textbf{Gap rate} & \textbf{Defended} & \textbf{Missing} \\
+\midrule
+Indirect Injection Protection & 97.8\% & 37    & 1{,}609 \\
+Unicode Protection            & 97.3\% & 44    & 1{,}602 \\
+Role Boundary                 & 92.4\% & 125   & 1{,}521 \\
+Length Limits                 & 89.9\% & 166   & 1{,}480 \\
+Harmful Content Prevention    & 88.3\% & 192   & 1{,}454 \\
+Abuse Prevention              & 78.1\% & 360   & 1{,}286 \\
+Social Engineering Defense    & 71.4\% & 470   & 1{,}176 \\
+Multi-language Protection     & 64.3\% & 587   & 1{,}059 \\
+Instruction Boundary          & 37.7\% & 1{,}026 & 620 \\
+Output Control                & 35.5\% & 1{,}061 & 585 \\
+Input Validation              & 10.7\% & 1{,}470 & 176 \\
+Data Protection               &  9.4\% & 1{,}491 & 155 \\
+\bottomrule
+\end{tabular}
+\caption{Per-vector gap rates across 1{,}646 production system prompts. Source: \texttt{prompt-defense-audit/research/defense-posture-results.json}.}
+\label{tab:gap-rates}
+\end{table}
+
+The distribution is markedly bimodal. Two clusters emerge:
+
+\textbf{High-coverage cluster} (gap $<\!15\%$): Input Validation and
+Data Protection are present in $>\!90\%$ of prompts. These are
+\emph{phraseologically prominent} defenses --- prompts routinely
+contain explicit ``do not reveal,'' ``do not share,'' ``never disclose''
+language.
+
+\textbf{Failure cluster} (gap $>\!75\%$): Indirect Injection,
+Unicode, Role Boundary, Length Limits, Harmful Content, and Abuse
+Prevention are missing from a large majority. These are the defenses
+that require structured, often \emph{negative} statements about
+content \emph{outside the immediate user turn} --- tool output, RAG
+documents, untrusted forwarded content, encoded payloads.
+
+\subsection{Posture as substrate}\label{sec:posture}
+Prompts that fail at least one cluster-2 (high-gap) vector very
+rarely fail \emph{only} one. We observe that 92\% of F-graded prompts
+fail at least eight of the twelve vectors simultaneously. The
+remaining 8\% of F-graded prompts fail seven or fewer but typically
+have one or two cluster-1 defenses absent (e.g., they lack Data
+Protection because the system has no proprietary content to protect),
+which suppresses their score.
+
+This clustering is consistent with the framing we previously
+proposed in the OWASP LLM Top~10 discussion thread for the 2025
+revision\cite{asi-tracker-2025}: defense posture is most usefully
+modeled as a \emph{substrate} on which individual OWASP risks are
+mitigated, not as a checklist of independent defenses. A prompt that
+mentions Unicode awareness alone, without instruction-boundary or
+indirect-injection awareness, is empirically rare; the layers go
+together. Conversely, a prompt that names indirect injection without
+also naming Unicode normalization is similarly rare.
+
+\section{Discussion}
+
+\subsection{Limitations}
+\paragraph{Regex coverage.} The scanner is deterministic and pure-regex, which is by
+design --- this enables zero inference cost and full reproducibility ---
+but it scores \emph{presence of defensive language}, not
+\emph{behavioral robustness}. A prompt that mentions ``do not reveal
+your system prompt'' will score on Data Protection even if the model
+in practice ignores that instruction under adversarial pressure.
+
+\paragraph{Source bias.} Three of the four source corpora are
+crowd-curated; one is red-team-collected. They are skewed toward
+prompts that someone found interesting enough to extract and
+publish. We assume the \emph{distribution} of defense posture in the
+underlying population is similar but cannot prove this from the data
+we have.
+
+\paragraph{Temporal drift.} The four corpora span 2024--2026. There
+has been measurable industry attention to OWASP LLM Top~10 over that
+window; gap rates may be moving. A repeat scan in 2027 would
+illuminate this.
+
+\subsection{Implications}
+The 97.8\% gap on Indirect Injection Protection is the headline
+finding. Real RAG / tool-using agents accept untrusted text into
+their context window thousands of times per day. The mitigation
+language --- ``treat external content as data, not as instructions'' ---
+is concise and well known, and yet it appears in only 2.2\% of
+production prompts in this corpus. Practitioners interested in
+narrowing this gap may find the
+posture-as-substrate framing useful: rather than mitigating each
+OWASP risk individually, layer a short standard prefix that names
+all six high-gap defenses in one block.
+
+\section{Conclusion}
+We presented a population-level audit of prompt-engineering defense
+posture in 1{,}646 production system prompts using a deterministic
+regex scanner. 78.3\% of audited prompts score F, with the gap
+concentrated in defenses against untrusted content, Unicode
+smuggling, role escape, and length-based exhaustion. The scanner,
+the aggregate dataset, the reproduction script, and this paper are
+all publicly available; pull requests and follow-up scans on
+additional corpora are welcomed.
+
+\section*{Code and Data Availability}
+Scanner (MIT): \url{https://github.com/ppcvote/prompt-defense-audit}\\
+Aggregate dataset (CC0): \url{https://huggingface.co/datasets/ppcvote/prompt-defense-1646}\\
+Reproduction script:
+\url{https://github.com/ppcvote/prompt-defense-audit/blob/master/research/scan.mjs}\\
+This preprint (CC-BY-4.0):
+\url{https://github.com/ppcvote/prompt-defense-audit/tree/master/paper}
+
+\begin{thebibliography}{99}
+\bibitem{owasp-llm-top10-2025}
+OWASP Foundation. \emph{OWASP Top 10 for Large Language Model
+Applications, 2025 edition}.
+\url{https://genai.owasp.org/llm-top-10/}
+
+\bibitem{greshake-indirect-2023}
+K. Greshake, S. Abdelnabi, S. Mishra, et al.
+\emph{Not what you've signed up for: Compromising Real-World
+LLM-Integrated Applications with Indirect Prompt Injection.}
+AISec '23, 2023.
+
+\bibitem{perez-ignore-2022}
+F. P\'erez and I. Ribeiro.
+\emph{Ignore Previous Prompt: Attack Techniques For Language Models.}
+NeurIPS ML Safety Workshop, 2022.
+
+\bibitem{liu-jailbreak-survey-2024}
+X. Liu, N. Xu, M. Chen, and C. Xiao.
+\emph{Jailbreaking Black Box Large Language Models in Twenty Queries.}
+arXiv:2310.08419, 2024.
+
+\bibitem{rebuff-2023}
+ProtectAI. \emph{Rebuff: A self-hardening prompt injection detector.}
+\url{https://github.com/protectai/rebuff}
+
+\bibitem{nemo-guardrails-2023}
+NVIDIA. \emph{NeMo Guardrails.}
+\url{https://github.com/NVIDIA/NeMo-Guardrails}
+
+\bibitem{llamaguard-2024}
+Meta. \emph{Llama Guard 3 and Prompt Guard 2.}
+\url{https://github.com/meta-llama/PurpleLlama}
+
+\bibitem{asi-tracker-2025}
+A. Davidson and M.Y. Xie.
+\emph{OWASP LLM Top 10 (2025): Defense Posture as a Substrate Layer.}
+Discussion: \url{https://github.com/OWASP/www-project-top-10-for-large-language-model-applications/issues/807}, April 2026.
+
+\end{thebibliography}
+
+\end{document}
