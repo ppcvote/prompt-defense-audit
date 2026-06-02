@@ -1,0 +1,44 @@
+# YAML 1.2 Citation File Format — https://citation-file-format.github.io/
+# Standard metadata for citing this software in academic work.
+# arXiv preprint companion paper expected mid-2026.
+cff-version: 1.2.0
+message: "If you use prompt-defense-audit in academic work, please cite as below."
+title: "prompt-defense-audit"
+abstract: >
+  A 12-vector static checker for LLM system prompt hardening, backed by a
+  1,646-prompt attack corpus. Integrated into security frameworks at
+  Microsoft, Cisco, OWASP, and UK Government AISI as of June 2026.
+type: software
+license: MIT
+repository-code: "https://github.com/ppcvote/prompt-defense-audit"
+url: "https://www.npmjs.com/package/prompt-defense-audit"
+keywords:
+  - prompt injection
+  - LLM security
+  - system prompt audit
+  - AI safety
+  - OWASP LLM Top 10
+authors:
+  - family-names: "Xie"
+    given-names: "Min Yi"
+    affiliation: "Ultra Lab (Ultra Creation Co., Ltd.)"
+    website: "https://ultralab.tw/minyi"
+preferred-citation:
+  type: software
+  title: "prompt-defense-audit: 12-Vector System Prompt Static Checker"
+  authors:
+    - family-names: "Xie"
+      given-names: "Min Yi"
+      affiliation: "Ultra Lab"
+  year: 2026
+  url: "https://github.com/ppcvote/prompt-defense-audit"
+references:
+  - type: article
+    title: "From Probes to Postmortems: Mapping a 12-Vector System Prompt Audit Corpus to Six Crypto AI Agent Security Failures"
+    authors:
+      - family-names: "Xie"
+        given-names: "Min Yi"
+    year: 2026
+    notes: >
+      arXiv preprint forthcoming (cs.CR). Update this entry with the
+      arXiv ID + DOI once posted.

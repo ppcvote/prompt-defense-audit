@@ -264,10 +264,30 @@ MIT — [Ultra Lab](https://ultralab.tw)
 
 ## Used In Production
 
-This library powers prompt defense detection across multiple production deployments and security frameworks:
+This library powers prompt defense detection across multiple production deployments and security frameworks. **11 PRs merged into indicator-org repos** (Microsoft / Cisco / OWASP / UK Government AISI / awesome-list curators):
 
-- **[Cisco AI Defense — `mcp-scanner`](https://github.com/cisco-ai-defense/mcp-scanner/pull/146)** — `PromptDefenseAnalyzer` module (12-vector regex audit), [merged](https://github.com/cisco-ai-defense/mcp-scanner/pull/146) Apr 2026.
+### Frameworks + scanners (engine-level integration)
+
 - **[Microsoft Agent Governance Toolkit — `agent-compliance`](https://github.com/microsoft/agent-governance-toolkit/pull/854)** — `PromptDefenseEvaluator` integrated with `MerkleAuditChain` + `PromotionGate`, [merged](https://github.com/microsoft/agent-governance-toolkit/pull/854) Apr 2026.
+- **[Microsoft Agent Governance Toolkit — Docker provider doc fix](https://github.com/microsoft/agent-governance-toolkit/pull/2670)** — companion docstring fix, [merged](https://github.com/microsoft/agent-governance-toolkit/pull/2670) May 2026.
+- **[Cisco AI Defense — `mcp-scanner`](https://github.com/cisco-ai-defense/mcp-scanner/pull/146)** — `PromptDefenseAnalyzer` module (12-vector regex audit), [merged](https://github.com/cisco-ai-defense/mcp-scanner/pull/146) Apr 2026 (proposal → merge in 39 minutes).
+
+### Test harnesses + eval suites
+
+- **[OWASP Agent-Security-Regression-Harness — `mcp_trust_boundary` scenario](https://github.com/OWASP/Agent-Security-Regression-Harness/pull/78)** — adversarial-seeding regression test, [merged](https://github.com/OWASP/Agent-Security-Regression-Harness/pull/78) May 2026.
+- **[OWASP Agent-Security-Regression-Harness — `goal_hijack` scenario](https://github.com/OWASP/Agent-Security-Regression-Harness/pull/79)** — foot-in-the-door variant, [merged](https://github.com/OWASP/Agent-Security-Regression-Harness/pull/79) May 2026.
+- **[OWASP AI Testing Guide — AITG-APP-05 output-injection categories](https://github.com/OWASP/www-project-ai-testing-guide/pull/77)** — 6 vector categories added, [merged](https://github.com/OWASP/www-project-ai-testing-guide/pull/77) Jun 2026.
+- **[UK Government BEIS AISI — `inspect_evals`](https://github.com/UKGovernmentBEIS/inspect_evals/pull/1724)** — SimpleQA config migration to single-file `--run-config`, [merged](https://github.com/UKGovernmentBEIS/inspect_evals/pull/1724) Jun 2026.
+
+### Standards mappings + awesome lists
+
+- **[sint-ai/sint-protocol — Static Analysis Complement](https://github.com/sint-ai/sint-protocol/pull/179)** — ASI mapping addendum, [merged](https://github.com/sint-ai/sint-protocol/pull/179) May 2026.
+- **[Agent-Threat-Rule/agent-threat-rules — Integration page](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54)** — 20 vectors → 9 detection categories cross-walk, [merged](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54) May 2026.
+- **[TalEliyahu/Awesome-AI-Security — primary listing](https://github.com/TalEliyahu/Awesome-AI-Security/pull/63)** — added under Servers & Dev tooling, [merged](https://github.com/TalEliyahu/Awesome-AI-Security/pull/63) May 2026.
+- **[TalEliyahu/Awesome-AI-Security — misp-mcp-server](https://github.com/TalEliyahu/Awesome-AI-Security/pull/66)** — companion listing, [merged](https://github.com/TalEliyahu/Awesome-AI-Security/pull/66) May 2026.
+
+### Ultra Lab products built on this engine
+
 - **[UltraProbe](https://ultralab.tw/probe)** (UltraLab) — free AI security scanner; uses this library as the Prompt Security engine.
 - **[Quartz Cloud](https://quartz.tw)** — Taiwan-domiciled runtime AI firewall (Q3 2026 closed beta). Quartz uses this engine as its ingress detector + extends it with runtime + jurisdictional layers. The engine is open source under [Ultra Lab](https://ultralab.tw); Quartz is a commercial brand built on top of it. Customers can audit, fork, or self-host the engine without lock-in.
 
