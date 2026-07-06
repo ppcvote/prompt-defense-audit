@@ -118,9 +118,15 @@ const THREAT_RULES: ThreatRule[] = [
   },
   {
     id: 'shell-reverse',
+    // `nc\s+-[a-z]*[el]` requires the netcat flag cluster to contain `e`
+    // (execute) or `l` (listen) — the flags that actually build a reverse or
+    // bind shell. Bare verbose/port flags (`nc -v host 80`, `nc -nv`, `nc -p`)
+    // are legitimate connectivity checks and no longer trip this rule. The
+    // earlier `-[elvp]` class matched a lone `-v`, a common false positive on
+    // benign netcat usage (surfaced in confident-ai/deepteam#225).
     name: 'Reverse Shell',
     severity: 'critical',
-    pattern: /(?:\/dev\/tcp\/|nc\s+-[elvp]|bash\s+-i\s+>&|python[3]?\s+-c\s+['"]import\s+(?:socket|os|subprocess))/gi,
+    pattern: /(?:\/dev\/tcp\/|nc\s+-[a-z]*[el]|bash\s+-i\s+>&|python[3]?\s+-c\s+['"]import\s+(?:socket|os|subprocess))/gi,
     description: 'Reverse shell payload',
   },
   {
