@@ -23,6 +23,7 @@
 export { audit, auditWithDetails } from './scanner.js'
 export { scanOutput } from './output-scanner.js'
 export { ATTACK_VECTORS } from './vectors.js'
+export { outputScanToSarif, auditToSarif, sha256Hex, draftRuleId } from './sarif.js'
 export type {
   AuditResult,
   AuditDetailedResult,
@@ -34,3 +35,10 @@ export type {
   OutputScanResult,
   OutputThreat,
 } from './output-scanner.js'
+export type {
+  SarifLog,
+  SarifRun,
+  SarifResult,
+  SarifLevel,
+  SarifEmitOptions,
+} from './sarif.js'
