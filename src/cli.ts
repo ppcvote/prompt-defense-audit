@@ -11,10 +11,13 @@
  *   npx prompt-defense-audit --zh "你的系統提示"
  */
 
-import { readFileSync } from 'fs'
+import { readFileSync, writeFileSync } from 'fs'
+import { isAbsolute } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { auditWithDetails } from './scanner.js'
 import { scanOutput } from './output-scanner.js'
 import { ATTACK_VECTORS } from './vectors.js'
+import { outputScanToSarif, auditToSarif } from './sarif.js'
 
 const args = process.argv.slice(2)
 
@@ -24,6 +27,8 @@ let zhMode = false
 let fileMode = false
 let filePath = ''
 let outputMode = false
+let sarifMode = false
+let sarifOutPath = ''
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i]
@@ -31,6 +36,11 @@ for (let i = 0; i < args.length; i++) {
     outputMode = true
   } else if (arg === '--json' || arg === '-j') {
     jsonMode = true
+  } else if (arg === '--sarif') {
+    sarifMode = true
+  } else if (arg === '--sarif-out') {
+    sarifMode = true
+    sarifOutPath = args[++i] || ''
   } else if (arg === '--zh' || arg === '--chinese') {
     zhMode = true
   } else if (arg === '--file' || arg === '-f') {
@@ -72,6 +82,8 @@ Options:
   --output, -o        Scan AI output for XSS/SQLi/shell/credential threats (OWASP LLM02)
   --file, -f <path>   Read text from file
   --json, -j          Output as JSON
+  --sarif             Output as SARIF 2.1.0 (GitHub code scanning / ATR)
+  --sarif-out <path>  Write SARIF 2.1.0 to a file
   --zh, --chinese     Output in Traditional Chinese
   --vectors           List all 17 attack vectors
   --version, -v       Show version
@@ -82,6 +94,22 @@ Examples:
   prompt-defense-audit --output "<script>alert(1)</script>"
   prompt-defense-audit --file my-chatbot-prompt.txt --json
 `)
+}
+
+/** Turn a filesystem path into a SARIF-valid artifactLocation.uri. */
+function toArtifactUri(p: string): string {
+  return isAbsolute(p) ? pathToFileURL(p).href : p.replace(/\\/g, '/')
+}
+
+function getVersion(): string {
+  try {
+    const pkg = JSON.parse(
+      readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+    )
+    return pkg.version || '0.0.0'
+  } catch {
+    return '0.0.0'
+  }
 }
 
 function printVectors(zh: boolean) {
@@ -118,6 +146,49 @@ async function main() {
   if (!prompt) {
     printHelp()
     process.exit(1)
+  }
+
+  // SARIF 2.1.0 emission — a separate output path that never touches the
+  // legacy --json / pretty formatters. Works for both output and prompt-audit
+  // scans. See src/sarif.ts and ppcvote/prompt-defense-audit#1.
+  if (sarifMode) {
+    const startTimeUtc = new Date().toISOString()
+    const artifactUri = fileMode && filePath ? toArtifactUri(filePath) : undefined
+    const version = getVersion()
+    let sarif
+    if (outputMode) {
+      const result = scanOutput(prompt)
+      sarif = outputScanToSarif(result, {
+        scannedText: prompt,
+        artifactUri,
+        toolVersion: version,
+        startTimeUtc,
+        endTimeUtc: new Date().toISOString(),
+      })
+    } else {
+      const result = auditWithDetails(prompt)
+      sarif = auditToSarif(result, {
+        scannedText: prompt,
+        artifactUri,
+        toolVersion: version,
+        startTimeUtc,
+        endTimeUtc: new Date().toISOString(),
+      })
+    }
+    const json = JSON.stringify(sarif, null, 2)
+    if (sarifOutPath) {
+      try {
+        writeFileSync(sarifOutPath, json, 'utf8')
+      } catch (e: any) {
+        console.error(`Error writing SARIF file: ${e.message}`)
+        process.exit(1)
+      }
+    } else {
+      console.log(json)
+    }
+    // Exit non-zero when findings exist, matching the other scan modes.
+    const hasFindings = sarif.runs[0].results.length > 0
+    process.exit(hasFindings ? 1 : 0)
   }
 
   // Output scanning mode (OWASP LLM02)
