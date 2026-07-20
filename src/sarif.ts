@@ -11,7 +11,12 @@
  *     PR-to-ID process assigns a canonical id. Tracked in
  *     ppcvote/prompt-defense-audit#1.
  *   - Each scanned artifact carries hashes["sha-256"] (64-char lowercase hex) so
- *     the same file dedups across scans (OQ1 agreement).
+ *     the same file dedups across scans (OQ1 agreement). Per the adopted §2
+ *     wording (2026-07-20), the digest is computed over the artifact's RAW
+ *     OCTETS, before any character decoding — for a file this MUST equal
+ *     `sha256sum` of that file. Callers that read an artifact from disk or a
+ *     stream pass the original bytes via artifactBytes; hashing a decoded,
+ *     normalized, or trimmed string representation is a spec violation.
  *   - invocations[].executionSuccessful is always present; a failed scan emits
  *     toolExecutionNotifications[] with the stderr excerpt.
  *   - Taxonomy binding (result.taxa[] / run.taxonomies[]) is MAY in v1 and is
@@ -115,8 +120,24 @@ export interface SarifLog {
 
 /** Options common to both emitters. */
 export interface SarifEmitOptions {
-  /** The exact text that was scanned (used to compute the artifact digest). */
+  /**
+   * The exact text that was scanned. Used for region offsets, and as the
+   * digest subject only when the artifact is a true in-memory string (no
+   * artifactBytes) — a string's canonical octets are its UTF-8 encoding.
+   */
   scannedText: string
+  /**
+   * The raw octets of the scanned artifact, exactly as stored. REQUIRED
+   * whenever the artifact originates from a file or stream: the envelope
+   * digest (§2, adopted 2026-07-20) is SHA-256 over these bytes, before any
+   * character decoding, and must equal `sha256sum` of the artifact. When
+   * omitted, the digest falls back to the UTF-8 encoding of scannedText —
+   * correct only for artifacts that never existed as bytes outside this
+   * process. Decode-then-hash is many-to-one on invalid UTF-8 (every invalid
+   * sequence collapses to U+FFFD), so passing decoded file content here via
+   * scannedText alone would let two different files share one digest.
+   */
+  artifactBytes?: Uint8Array
   /** Logical URI for the scanned artifact. Defaults per emitter. */
   artifactUri?: string
   /** Tool version to report (defaults to the running package version if omitted). */
@@ -160,9 +181,21 @@ const SEVERITY_SCORE: Record<OutputThreat['severity'], string> = {
   low: '3.0',
 }
 
-/** SHA-256 of the UTF-8 bytes of `text`, as 64-char lowercase hex. */
-export function sha256Hex(text: string): string {
-  return createHash('sha256').update(text, 'utf8').digest('hex')
+/**
+ * SHA-256 as 64-char lowercase hex.
+ *
+ * Pass the artifact's raw octets (Uint8Array) whenever they exist — the result
+ * then equals `sha256sum` of the artifact, per the envelope's raw-octets basis.
+ * A string input is hashed over its UTF-8 encoding, which is the canonical
+ * octet form of an in-memory string; for well-formed UTF-8 the two paths are
+ * byte-identical, and they intentionally diverge on invalid input (where
+ * decoding has already destroyed information via U+FFFD substitution).
+ */
+export function sha256Hex(data: string | Uint8Array): string {
+  const hash = createHash('sha256')
+  if (typeof data === 'string') hash.update(data, 'utf8')
+  else hash.update(data)
+  return hash.digest('hex')
 }
 
 /** Namespaced DRAFT rule id for a scanner-native rule slug. */
@@ -225,6 +258,7 @@ export function outputScanToSarif(
   const uri = opts.artifactUri ?? 'output.txt'
   const version = opts.toolVersion ?? '0.0.0'
   const text = opts.scannedText
+  const digestSubject = opts.artifactBytes ?? text
 
   // One reportingDescriptor per distinct rule that fired, in first-seen order.
   const ruleIndexById = new Map<string, number>()
@@ -291,7 +325,9 @@ export function outputScanToSarif(
         tool: { driver: driver(rules, version) },
         columnKind: 'utf16CodeUnits',
         invocations: [invocation(opts)],
-        artifacts: [{ location: { uri }, hashes: { 'sha-256': sha256Hex(text) } }],
+        artifacts: [
+          { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
+        ],
         results,
       },
     ],
@@ -314,6 +350,7 @@ export function auditToSarif(
   const uri = opts.artifactUri ?? 'system-prompt.txt'
   const version = opts.toolVersion ?? '0.0.0'
   const text = opts.scannedText
+  const digestSubject = opts.artifactBytes ?? text
 
   const missingChecks = audit.checks.filter((c) => !c.defended)
 
@@ -347,7 +384,9 @@ export function auditToSarif(
         tool: { driver: driver(rules, version) },
         columnKind: 'utf16CodeUnits',
         invocations: [invocation(opts)],
-        artifacts: [{ location: { uri }, hashes: { 'sha-256': sha256Hex(text) } }],
+        artifacts: [
+          { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
+        ],
         results,
       },
     ],

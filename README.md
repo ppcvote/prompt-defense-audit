@@ -83,9 +83,29 @@ npx prompt-defense-audit --json "Your prompt"
 # Traditional Chinese output
 npx prompt-defense-audit --zh "你的系統提示"
 
-# List all 12 attack vectors
+# List all 17 attack vectors
 npx prompt-defense-audit --vectors
 ```
+
+### SARIF 2.1.0 output
+
+```bash
+# Prompt audit as SARIF (GitHub code scanning, ATR, any SARIF consumer)
+npx prompt-defense-audit --file prompt.txt --sarif
+
+# Output scan as SARIF, written to a file
+npx prompt-defense-audit --output --sarif-out results.sarif "AI response text"
+```
+
+Emits envelope-conformant SARIF per the multi-scanner envelope RFC
+([claude-code-skill-security-check#24](https://github.com/aliksir/claude-code-skill-security-check/issues/24)):
+`DRAFT-pda-<slug>` rule ids with a tracking-issue URL, one artifact per run
+carrying `hashes["sha-256"]`, and `invocations[].executionSuccessful` with
+stderr notifications on failure. The artifact digest is SHA-256 over the
+**raw octets** of the scanned file or stdin — before any character decoding,
+never trimmed — so it always equals `sha256sum` of the input and joins
+byte-for-byte with the digests emitted by skil-lock, skill-scanner, and ATR.
+Exit code is non-zero when findings exist, matching the other scan modes.
 
 ### CI/CD Gate
 
