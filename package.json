@@ -1,6 +1,6 @@
 {
   "name": "prompt-defense-audit",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Deterministic LLM prompt defense scanner — 17 attack vectors + 12 Unicode smuggling categories + 6 output-scanner rules for MCP/agent attack surface. Pure regex, zero AI cost, < 5ms.",
   "type": "module",
   "main": "./dist/index.js",

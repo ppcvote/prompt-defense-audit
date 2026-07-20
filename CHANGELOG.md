@@ -4,6 +4,64 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.6.0] - 2026-07-20
+
+### Added — SARIF 2.1.0 emitter (`--sarif`, `--sarif-out`)
+
+Envelope-conformant SARIF output behind a new, fully separate emission path
+(#3, ppcvote/prompt-defense-audit#1). Existing `--json` / pretty output is
+byte-identical to v1.5.0 — a snapshot regression test pins it. Highlights:
+
+- `DRAFT-pda-<slug>` rule ids per the envelope RFC's `DRAFT-<scanner>-<slug>`
+  convention, each carrying its tracking-issue URL until ATR assigns canonical
+  ids ([claude-code-skill-security-check#24](https://github.com/aliksir/claude-code-skill-security-check/issues/24)).
+- One artifact per run with `hashes["sha-256"]`; `invocations[].executionSuccessful`
+  always present, with `toolExecutionNotifications` + stderr excerpt on failure.
+- `columnKind: utf16CodeUnits` declared; credential findings located by
+  region but never reproduced in `snippet.text`.
+- Vendored SARIF 2.1.0 schema; conformance tests validate against it with ajv
+  (dev-dep only — runtime stays zero-dependency).
+
+### Fixed — artifact digest is now SHA-256 over raw octets
+
+The envelope RFC adopted a normative digest basis on 2026-07-20 (§2: raw
+octets, before any character decoding, equal to `sha256sum`). Two distinct
+defects in the pre-release emitter are fixed. **They are separate classes —
+do not conflate them when reasoning about which digests moved:**
+
+1. **Encoding basis (`--file` and API callers passing decoded file content).**
+   The digest was computed over the UTF-8-*decoded* string, which substitutes
+   U+FFFD for invalid sequences before hashing. Decode-then-hash is
+   many-to-one: two files differing only in invalid bytes share one digest, so
+   a verdict on one could replay as authoritative for the other with the join
+   "succeeding". Affected digests: **only** artifacts containing invalid UTF-8
+   or lone surrogates. Well-formed UTF-8 round-trips byte-identically, so
+   those digests are unchanged.
+2. **stdin trimming (broader).** The stdin path hashed a `.trim()`ed string,
+   so **any** piped input with leading/trailing whitespace — including the
+   trailing newline that ends most POSIX text files and every `echo`-piped
+   string — produced a digest matching neither `sha256sum` nor any other
+   envelope emitter, independent of UTF-8 validity.
+
+Mechanics: the CLI now captures the artifact's raw bytes at the single point
+it is read (file or stdin) and passes them via a new optional
+`SarifEmitOptions.artifactBytes`; `sha256Hex()` accepts `string | Uint8Array`
+(additive — string behavior unchanged). In SARIF mode, stdin is scanned
+untrimmed so region offsets and the digest describe the same artifact; the
+legacy pretty/`--json` stdin paths keep their historical trim and remain
+byte-identical. Cross-implementation conformance is pinned in tests against
+the shared `invalid-utf8/` fixture (skills-lock/skil-lock#41): raw
+`0e5f6446…`, pre-fix decoded `eec1f132…`, one-byte-flip `1546f3f1…`.
+
+**Migration:** no npm release ever shipped the wrong basis (it existed only on
+git master between #3, 2026-07-09, and this fix). If you consumed SARIF from
+master in that window, re-scan: digests differ for the two classes above.
+
+### Docs
+
+- README: `--sarif` usage + digest-basis note; fixed a stale "12 attack
+  vectors" line (17 since v1.4).
+
 ## [1.5.0] - 2026-05-30
 
 ### Added — broader smuggling + output coverage

@@ -124,10 +124,24 @@ function printVectors(zh: boolean) {
 }
 
 async function main() {
+  // Raw octets of the scanned artifact, captured at the single point it is
+  // read (file or stdin). The SARIF digest is computed over exactly these
+  // bytes (envelope RFC §2: raw octets, before any character decoding, equal
+  // to `sha256sum`) — never over a decoded or trimmed string. Reading once and
+  // carrying the bytes forward also avoids a re-read at emit time, which would
+  // open a TOCTOU window between scan and digest.
+  let artifactBytes: Uint8Array | undefined
+  // Untrimmed decode of stdin. The SARIF path scans this (regions and digest
+  // must describe the same artifact); the legacy pretty/--json paths keep
+  // their historical trimmed input, byte-identical to prior releases.
+  let stdinText: string | undefined
+
   // Read from file
   if (fileMode && filePath) {
     try {
-      prompt = readFileSync(filePath, 'utf8')
+      const bytes = readFileSync(filePath)
+      artifactBytes = bytes
+      prompt = bytes.toString('utf8')
     } catch (e: any) {
       console.error(`Error reading file: ${e.message}`)
       process.exit(1)
@@ -140,7 +154,10 @@ async function main() {
     for await (const chunk of process.stdin) {
       chunks.push(chunk)
     }
-    prompt = Buffer.concat(chunks).toString('utf8').trim()
+    const raw = Buffer.concat(chunks)
+    artifactBytes = raw
+    stdinText = raw.toString('utf8')
+    prompt = stdinText.trim()
   }
 
   if (!prompt) {
@@ -155,20 +172,25 @@ async function main() {
     const startTimeUtc = new Date().toISOString()
     const artifactUri = fileMode && filePath ? toArtifactUri(filePath) : undefined
     const version = getVersion()
+    // Scan the artifact as it arrived: for stdin that is the untrimmed decode,
+    // so region offsets and the raw-octet digest describe the same bytes.
+    const scannedText = stdinText ?? prompt
     let sarif
     if (outputMode) {
-      const result = scanOutput(prompt)
+      const result = scanOutput(scannedText)
       sarif = outputScanToSarif(result, {
-        scannedText: prompt,
+        scannedText,
+        artifactBytes,
         artifactUri,
         toolVersion: version,
         startTimeUtc,
         endTimeUtc: new Date().toISOString(),
       })
     } else {
-      const result = auditWithDetails(prompt)
+      const result = auditWithDetails(scannedText)
       sarif = auditToSarif(result, {
-        scannedText: prompt,
+        scannedText,
+        artifactBytes,
         artifactUri,
         toolVersion: version,
         startTimeUtc,
