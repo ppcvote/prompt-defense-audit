@@ -13,15 +13,17 @@
 ```
 $ npx prompt-defense-audit --zh "你是一個有用的助手。"
 
-  Grade: F  (8/100, 1/12 defenses)
+  Grade: F  (6/100, 1/17 defenses)
 
   防護狀態：
 
-  ✗ 角色邊界 (80%)
-    Partial: only 1/2 defense pattern(s)
+  ✓ 角色邊界 (70%)
+    Found: "你是"
   ✗ 指令邊界 (80%)
     No defense pattern found
   ✗ 資料保護 (80%)
+    No defense pattern found
+  ✗ 輸出控制 (80%)
     No defense pattern found
   ...
 ```
@@ -139,9 +141,9 @@ fi
 interface AuditResult {
   grade: 'A' | 'B' | 'C' | 'D' | 'F'
   score: number       // 0-100
-  coverage: string    // 例如 "4/12"
+  coverage: string    // 例如 "4/17"
   defended: number    // 已防禦的向量數
-  total: number       // 12
+  total: number       // 17
   missing: string[]   // 缺少防禦的向量 ID
 }
 ```
@@ -173,7 +175,7 @@ interface DefenseCheck {
 ## 運作原理
 
 1. 解析系統提示文字
-2. 對 12 個攻擊向量，使用正則表達式偵測防禦性語言
+2. 對 17 個攻擊向量，使用正則表達式偵測防禦性語言
 3. 當足夠的模式匹配時，該防禦為「存在」（通常 >= 1，部分需要 >= 2）
 4. 同時檢查提示中是否嵌入了可疑的 Unicode 字元
 5. 計算覆蓋率分數並給予字母等級

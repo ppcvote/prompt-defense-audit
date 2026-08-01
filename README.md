@@ -13,15 +13,17 @@
 ```
 $ npx prompt-defense-audit "You are a helpful assistant."
 
-  Grade: F  (8/100, 1/12 defenses)
+  Grade: F  (6/100, 1/17 defenses)
 
   Defense Status:
 
-  ✗ Role Boundary (80%)
-    Partial: only 1/2 defense pattern(s)
+  ✓ Role Boundary (70%)
+    Found: "You are"
   ✗ Instruction Boundary (80%)
     No defense pattern found
   ✗ Data Protection (80%)
+    No defense pattern found
+  ✗ Output Control (80%)
     No defense pattern found
   ...
 ```
@@ -175,9 +177,9 @@ Quick audit. Returns grade, score, and list of missing defense IDs.
 interface AuditResult {
   grade: 'A' | 'B' | 'C' | 'D' | 'F'
   score: number       // 0-100
-  coverage: string    // e.g. "4/12"
+  coverage: string    // e.g. "4/17"
   defended: number    // count of defended vectors
-  total: number       // 12
+  total: number       // 17
   missing: string[]   // IDs of undefended vectors
 }
 ```
@@ -204,12 +206,12 @@ interface DefenseCheck {
 
 ### `ATTACK_VECTORS: AttackVector[]`
 
-Array of all 12 attack vector definitions with bilingual names and descriptions.
+Array of all 17 attack vector definitions with bilingual names and descriptions.
 
 ## How It Works
 
 1. Parses the system prompt text
-2. For each of 12 attack vectors, applies regex patterns that detect defensive language
+2. For each of 17 attack vectors, applies regex patterns that detect defensive language
 3. A defense is "present" when enough patterns match (usually >= 1, some require >= 2)
 4. Checks for suspicious Unicode characters embedded in the prompt
 5. Calculates coverage score and assigns a letter grade
@@ -302,7 +304,7 @@ This library powers prompt defense detection across multiple production deployme
 ### Standards mappings + awesome lists
 
 - **[sint-ai/sint-protocol — Static Analysis Complement](https://github.com/sint-ai/sint-protocol/pull/179)** — ASI mapping addendum, [merged](https://github.com/sint-ai/sint-protocol/pull/179) May 2026.
-- **[Agent-Threat-Rule/agent-threat-rules — Integration page](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54)** — 20 vectors → 9 detection categories cross-walk, [merged](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54) May 2026.
+- **[Agent-Threat-Rule/agent-threat-rules — Integration page](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54)** — defense-vector → 9 detection categories cross-walk, [merged](https://github.com/Agent-Threat-Rule/agent-threat-rules/pull/54) May 2026.
 - **[TalEliyahu/Awesome-AI-Security — primary listing](https://github.com/TalEliyahu/Awesome-AI-Security/pull/63)** — added under Servers & Dev tooling, [merged](https://github.com/TalEliyahu/Awesome-AI-Security/pull/63) May 2026.
 - **[TalEliyahu/Awesome-AI-Security — misp-mcp-server](https://github.com/TalEliyahu/Awesome-AI-Security/pull/66)** — companion listing, [merged](https://github.com/TalEliyahu/Awesome-AI-Security/pull/66) May 2026.
 
