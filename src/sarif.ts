@@ -81,7 +81,18 @@ export interface SarifArtifact {
 export interface SarifNotification {
   level: SarifLevel
   message: { text: string }
-  properties?: { standardError?: string }
+  properties?: {
+    standardError?: string
+    /**
+     * The bound that was applied, and how many items it held back. Emitted as
+     * a pair so a consumer can tell "40 of 45 withheld" from "40 of 4,000" —
+     * a dropped count without the cap it was measured against is not
+     * actionable. Convention shared with the OWASP Agentic Skills scanner
+     * integration page (OWASP/www-project-agentic-skills-top-10#49).
+     */
+    appliedCap?: number
+    droppedCount?: number
+  }
 }
 
 export interface SarifInvocation {
@@ -156,6 +167,19 @@ const SARIF_SCHEMA_URI =
   'https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json'
 
 /**
+ * Upper bound on a reproduced snippet, in characters.
+ *
+ * A pathological match (a multi-megabyte base64 blob, say) would otherwise
+ * inline the whole payload into every consumer's report. Above this bound the
+ * snippet is omitted entirely rather than shortened: a snippet that covers
+ * less than its own region is an incomplete answer wearing the shape of a
+ * complete one, and the region already tells a consumer exactly which bytes to
+ * read from the artifact. The omission is declared in
+ * invocations[].toolExecutionNotifications.
+ */
+export const SNIPPET_MAX_CHARS = 4096
+
+/**
  * Rules whose match text is itself a live secret. Their matched span is located
  * (charOffset/charLength) but never reproduced in snippet.text, so a SARIF file
  * uploaded to code scanning or committed on a public repo does not republish the
@@ -217,11 +241,15 @@ function lineColumn(text: string, offset: number): { line: number; column: numbe
   return { line, column: clamped - lastNewline }
 }
 
-function invocation(opts: SarifEmitOptions): SarifInvocation {
+function invocation(
+  opts: SarifEmitOptions,
+  snippetsOmitted = 0,
+): SarifInvocation {
   const successful = opts.executionSuccessful ?? true
   const inv: SarifInvocation = { executionSuccessful: successful }
   if (opts.startTimeUtc) inv.startTimeUtc = opts.startTimeUtc
   if (opts.endTimeUtc) inv.endTimeUtc = opts.endTimeUtc
+  const notes: SarifNotification[] = []
   if (!successful && opts.error) {
     const note: SarifNotification = {
       level: 'error',
@@ -230,8 +258,29 @@ function invocation(opts: SarifEmitOptions): SarifInvocation {
     if (opts.error.standardError) {
       note.properties = { standardError: opts.error.standardError }
     }
-    inv.toolExecutionNotifications = [note]
+    notes.push(note)
   }
+  if (snippetsOmitted > 0) {
+    // executionSuccessful stays true: the analysis did complete, and every
+    // finding is present with a correct region. What is bounded is only how
+    // much matched text the report reproduces, and that bound is declared
+    // here rather than left for a consumer to infer from a missing field.
+    notes.push({
+      level: 'warning',
+      message: {
+        text:
+          `${snippetsOmitted} result snippet(s) omitted: the matched span ` +
+          `exceeds the ${SNIPPET_MAX_CHARS}-character snippet cap. Regions ` +
+          `still describe the full matched extent — resolve charOffset and ` +
+          `charLength against the artifact to read the payload in full.`,
+      },
+      properties: {
+        appliedCap: SNIPPET_MAX_CHARS,
+        droppedCount: snippetsOmitted,
+      },
+    })
+  }
+  if (notes.length > 0) inv.toolExecutionNotifications = notes
   return inv
 }
 
@@ -280,26 +329,49 @@ export function outputScanToSarif(
     })
   }
 
+  // Snippets omitted because the matched span exceeds SNIPPET_MAX_CHARS. The
+  // region still describes the full extent; only the reproduced text is held
+  // back, and the count is declared in toolExecutionNotifications below.
+  let snippetsOmittedForLength = 0
+
   const results: SarifResult[] = scan.threats.map((t) => {
     const id = draftRuleId(t.id)
-    // NOTE: the scanner display-caps `match` at 100 chars, so for a payload
-    // longer than 100 chars the region and snippet cover only the first 100.
-    // The result stays internally consistent (snippet === text[charOffset ..
-    // charOffset + charLength]); widening to the full match extent is a tracked
-    // follow-up (see ppcvote/prompt-defense-audit#1).
+    // The region describes the FULL matched span (t.matchLength), not the
+    // display-capped `t.match`. Using the capped length here would report a
+    // 500-character payload as a 100-character one, and a consumer resolving
+    // charOffset+charLength against the artifact would silently read back a
+    // truncated span.
     const start = lineColumn(text, t.position)
-    const end = lineColumn(text, t.position + t.match.length)
+    const end = lineColumn(text, t.position + t.matchLength)
     const region: SarifRegion = {
       startLine: start.line,
       startColumn: start.column,
       endLine: end.line,
       endColumn: end.column,
       charOffset: t.position,
-      charLength: t.match.length,
+      charLength: t.matchLength,
     }
     // Locate secrets precisely but never reproduce their bytes.
     if (!isSecretRule(t.id)) {
-      region.snippet = { text: t.match }
+      // Reconstruct the whole match from the scanned text rather than emitting
+      // the display-capped copy: a snippet that covers less than its region is
+      // an incomplete answer that looks like a complete one. Verify the
+      // reconstruction against the capped prefix before trusting it, in case a
+      // caller passed scannedText that is not what the scan actually ran on.
+      const full = text.slice(t.position, t.position + t.matchLength)
+      const trustworthy = full.startsWith(t.match)
+      if (!trustworthy) {
+        // Fall back to the capped text and keep the region honest by narrowing
+        // it to what we can actually vouch for.
+        region.charLength = t.match.length
+        region.endLine = lineColumn(text, t.position + t.match.length).line
+        region.endColumn = lineColumn(text, t.position + t.match.length).column
+        region.snippet = { text: t.match }
+      } else if (t.matchLength <= SNIPPET_MAX_CHARS) {
+        region.snippet = { text: full }
+      } else {
+        snippetsOmittedForLength++
+      }
     }
     return {
       ruleId: id,
@@ -324,7 +396,7 @@ export function outputScanToSarif(
       {
         tool: { driver: driver(rules, version) },
         columnKind: 'utf16CodeUnits',
-        invocations: [invocation(opts)],
+        invocations: [invocation(opts, snippetsOmittedForLength)],
         artifacts: [
           { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
         ],

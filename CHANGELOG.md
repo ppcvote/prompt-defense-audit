@@ -4,6 +4,38 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed — SARIF regions understated the extent of long payloads
+
+The scanner display-caps a finding's matched text at 100 characters. The SARIF
+emitter used that capped length as the region's `charLength`, so a 500-character
+payload was reported as a 100-character one. A consumer resolving
+`charOffset + charLength` against the artifact read back a truncated span with
+nothing in the run indicating that it had — the result was internally
+consistent and externally wrong, which is the harder kind to notice.
+
+- `OutputThreat` now carries `matchLength`, the true length of the matched span
+  before display capping. `match` is unchanged (still capped, still 100).
+- Regions use `matchLength`, so `charOffset + charLength` always resolves to the
+  complete payload.
+- Snippets are reconstructed whole from the scanned text instead of reusing the
+  capped copy, and are verified against that copy before being trusted — a
+  caller passing `scannedText` the scan did not run on gets a region narrowed to
+  the extent the emitter can actually vouch for, rather than an unverifiable one.
+- Above `SNIPPET_MAX_CHARS` (4096) the snippet is **omitted rather than
+  shortened**, because a snippet covering less than its own region is an
+  incomplete answer shaped like a complete one. The omission is declared in
+  `invocations[].toolExecutionNotifications` at `warning` level with
+  `appliedCap` and `droppedCount` — the cap alongside the count, since a count
+  without its bound cannot distinguish 1-of-2 from 1-of-2000.
+  `executionSuccessful` stays `true`: the analysis completed, only the
+  reproduced text was bounded.
+
+The `appliedCap` / `droppedCount` pairing follows the convention being settled
+in OWASP/www-project-agentic-skills-top-10#49, so two independent emitters use
+the same names.
+
 ## [1.6.0] - 2026-07-20
 
 ### Added — SARIF 2.1.0 emitter (`--sarif`, `--sarif-out`)

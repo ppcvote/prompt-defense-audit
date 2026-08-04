@@ -9,11 +9,29 @@
  * Pure regex, <5ms, zero dependencies.
  */
 
+/**
+ * Display cap on `OutputThreat.match`. The matched span itself is never
+ * shortened: `matchLength` always carries its true length, so a reporter can
+ * resolve the full extent against the scanned text.
+ */
+export const MATCH_DISPLAY_CAP = 100
+
 export interface OutputThreat {
   id: string
   name: string
   severity: 'critical' | 'high' | 'medium' | 'low'
+  /** Matched text, capped at MATCH_DISPLAY_CAP characters for display. */
   match: string
+  /**
+   * Length of the full matched span, before display capping — equal to
+   * `match.length` whenever the match was short enough to reproduce whole.
+   *
+   * Reporters MUST describe a finding's extent with this rather than
+   * `match.length`, or a long payload is understated as a 100-character one
+   * and a consumer resolving charOffset+charLength reads back a truncated
+   * span without any signal that it did.
+   */
+  matchLength: number
   position: number
   context: string
 }
@@ -308,7 +326,8 @@ export function scanOutput(output: string): OutputScanResult {
         id: rule.id,
         name: rule.name,
         severity: rule.severity,
-        match: match[0].substring(0, 100),
+        match: match[0].substring(0, MATCH_DISPLAY_CAP),
+        matchLength: match[0].length,
         position: match.index,
         context: output.substring(start, end).replace(/\n/g, ' '),
       })

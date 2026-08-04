@@ -6,6 +6,7 @@ import {
   auditToSarif,
   sha256Hex,
   draftRuleId,
+  SNIPPET_MAX_CHARS,
 } from '../src/sarif.js'
 
 const HEX64 = /^[a-f0-9]{64}$/
@@ -368,5 +369,69 @@ describe('auditToSarif', () => {
     }
     // still one hashable artifact for the prompt itself
     expect(s.runs[0].artifacts[0].hashes['sha-256']).toBe(sha256Hex(text))
+  })
+})
+
+// ─── region extent + snippet completeness (OWASP AST #49 convention) ────────
+//
+// The scanner display-caps `match` at 100 chars. Before this was fixed the
+// emitter used that capped length as the region's charLength, so a 500-char
+// payload was reported as a 100-char one and a consumer resolving
+// charOffset+charLength read back a truncated span with no signal that it had.
+// The region must describe the full matched extent; the snippet must either
+// cover that extent exactly or be withheld and declared.
+
+describe('region describes the full matched extent', () => {
+  const long = '<script>' + 'A'.repeat(500) + '</script>'
+  const text = 'prefix ' + long + ' suffix'
+
+  it('charLength is the true match length, not the display cap', () => {
+    const scan = scanOutput(text)
+    const t = scan.threats.find((x) => x.id === 'xss-script-tag')!
+    expect(t.match.length).toBe(100) // display cap, unchanged
+    expect(t.matchLength).toBe(long.length) // true extent, preserved
+
+    const s = outputScanToSarif(scan, { scannedText: text })
+    const region = s.runs[0].results[0].locations![0].physicalLocation.region!
+    expect(region.charLength).toBe(long.length)
+  })
+
+  it('a consumer resolving charOffset+charLength recovers the whole payload', () => {
+    const s = outputSarif(text)
+    const region = s.runs[0].results[0].locations![0].physicalLocation.region!
+    const resolved = text.slice(region.charOffset!, region.charOffset! + region.charLength!)
+    expect(resolved).toBe(long)
+    expect(region.snippet?.text).toBe(resolved)
+  })
+
+  it('omits the snippet past the cap but keeps the region exact, and declares it', () => {
+    const huge = '<script>' + 'B'.repeat(SNIPPET_MAX_CHARS + 2000) + '</script>'
+    const s = outputSarif('x ' + huge)
+    const region = s.runs[0].results[0].locations![0].physicalLocation.region!
+    expect(region.charLength).toBe(huge.length)
+    expect(region.snippet).toBeUndefined()
+
+    const inv = s.runs[0].invocations[0]
+    // The analysis completed; only the reproduced text was bounded.
+    expect(inv.executionSuccessful).toBe(true)
+    const note = inv.toolExecutionNotifications!.find((n) => n.properties?.appliedCap)!
+    expect(note.level).toBe('warning')
+    expect(note.properties!.appliedCap).toBe(SNIPPET_MAX_CHARS)
+    expect(note.properties!.droppedCount).toBe(1)
+  })
+
+  it('emits no notification when nothing was withheld', () => {
+    const s = outputSarif('<script>alert(1)</script>')
+    expect(s.runs[0].invocations[0].toolExecutionNotifications).toBeUndefined()
+  })
+
+  it('narrows the region to what it can vouch for if scannedText does not match', () => {
+    // Defensive: a caller passing text the scan did not run on must not get a
+    // region claiming an extent the emitter cannot verify.
+    const scan = scanOutput('<script>' + 'D'.repeat(300) + '</script>')
+    const s = outputScanToSarif(scan, { scannedText: 'completely different text' })
+    const region = s.runs[0].results[0].locations![0].physicalLocation.region!
+    expect(region.charLength).toBe(scan.threats[0].match.length)
+    expect(region.snippet?.text).toBe(scan.threats[0].match)
   })
 })
