@@ -4,7 +4,8 @@
  * Scans AI-generated text for web security threats before it reaches
  * downstream systems (HTML rendering, databases, shells, APIs).
  *
- * Maps to OWASP LLM02: Insecure Output Handling
+ * Maps to OWASP LLM05:2025 Improper Output Handling (named LLM02 "Insecure
+ * Output Handling" in the v1.1 edition; renumbered in the 2025 edition).
  *
  * Pure regex, <5ms, zero dependencies.
  */

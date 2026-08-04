@@ -294,7 +294,7 @@ function driver(rules: SarifReportingDescriptor[], version: string) {
 }
 
 /**
- * Emit SARIF for an output scan (OWASP LLM02 — insecure output handling).
+ * Emit SARIF for an output scan (OWASP LLM05:2025 improper output handling).
  *
  * Each OutputThreat becomes one result anchored to its region in the artifact.
  * Only rules that actually fired are included in tool.driver.rules, so the

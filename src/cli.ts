@@ -79,7 +79,7 @@ Usage:
   prompt-defense-audit --json "Your prompt"
 
 Options:
-  --output, -o        Scan AI output for XSS/SQLi/shell/credential threats (OWASP LLM02)
+  --output, -o        Scan AI output for XSS/SQLi/shell/credential threats (OWASP LLM05)
   --file, -f <path>   Read text from file
   --json, -j          Output as JSON
   --sarif             Output as SARIF 2.1.0 (GitHub code scanning / ATR)
@@ -213,7 +213,7 @@ async function main() {
     process.exit(hasFindings ? 1 : 0)
   }
 
-  // Output scanning mode (OWASP LLM02)
+  // Output scanning mode (OWASP LLM05:2025 Improper Output Handling)
   if (outputMode) {
     const result = scanOutput(prompt)
     if (jsonMode) {
