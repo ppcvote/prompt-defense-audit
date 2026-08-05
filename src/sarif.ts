@@ -84,13 +84,14 @@ export interface SarifNotification {
   properties?: {
     standardError?: string
     /**
-     * The bound that was applied, and how many items it held back. Emitted as
-     * a pair so a consumer can tell "40 of 45 withheld" from "40 of 4,000" —
-     * a dropped count without the cap it was measured against is not
-     * actionable. Convention shared with the OWASP Agentic Skills scanner
-     * integration page (OWASP/www-project-agentic-skills-top-10#49).
+     * How many items this run held back. The bound it was measured against is
+     * declared once at run level as `run.properties.appliedCap`, not repeated
+     * here: the count is an event specific to this run, the cap is
+     * configuration. Split per envelope v1
+     * (aliksir/claude-code-skill-security-check#24); the pairing rationale
+     * came out of OWASP/www-project-agentic-skills-top-10#49, where a count
+     * without its bound could not distinguish 1-of-2 from 1-of-2000.
      */
-    appliedCap?: number
     droppedCount?: number
   }
 }
@@ -121,6 +122,18 @@ export interface SarifRun {
   invocations: SarifInvocation[]
   artifacts: SarifArtifact[]
   results: SarifResult[]
+  /**
+   * Run-level configuration. `appliedCap` lives here rather than in the
+   * notification because it is a property of how the run was configured, true
+   * whether or not the bound ever bit — per the split adopted for envelope v1
+   * (aliksir/claude-code-skill-security-check#24, 2026-08-05).
+   *
+   * Declaring it unconditionally is what makes silence meaningful: a run with
+   * no cap declared and no notification says "this emitter bounds nothing",
+   * which is a different claim from "a bound exists and did not fire today".
+   * Carrying both keys only in the notification would collapse those two.
+   */
+  properties?: { appliedCap?: number }
 }
 
 export interface SarifLog {
@@ -275,7 +288,6 @@ function invocation(
           `charLength against the artifact to read the payload in full.`,
       },
       properties: {
-        appliedCap: SNIPPET_MAX_CHARS,
         droppedCount: snippetsOmitted,
       },
     })
@@ -401,6 +413,10 @@ export function outputScanToSarif(
           { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
         ],
         results,
+        // Declared on every run, fired or not: a consumer must be able to tell
+        // "this emitter bounds snippet text at 4096" from "this emitter bounds
+        // nothing", and absence of a notification alone cannot say which.
+        properties: { appliedCap: SNIPPET_MAX_CHARS },
       },
     ],
   }

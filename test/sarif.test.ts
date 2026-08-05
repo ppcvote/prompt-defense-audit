@@ -414,15 +414,21 @@ describe('region describes the full matched extent', () => {
     const inv = s.runs[0].invocations[0]
     // The analysis completed; only the reproduced text was bounded.
     expect(inv.executionSuccessful).toBe(true)
-    const note = inv.toolExecutionNotifications!.find((n) => n.properties?.appliedCap)!
+    const note = inv.toolExecutionNotifications!.find((n) => n.properties?.droppedCount)!
     expect(note.level).toBe('warning')
-    expect(note.properties!.appliedCap).toBe(SNIPPET_MAX_CHARS)
     expect(note.properties!.droppedCount).toBe(1)
+    // The cap is configuration and belongs at run level, not repeated in the
+    // event — envelope v1 split (claude-code-skill-security-check#24).
+    expect(note.properties!.appliedCap).toBeUndefined()
+    expect(s.runs[0].properties!.appliedCap).toBe(SNIPPET_MAX_CHARS)
   })
 
-  it('emits no notification when nothing was withheld', () => {
+  it('declares the cap at run level even when nothing was withheld', () => {
+    // This is what makes silence meaningful: absence of a notification alone
+    // cannot distinguish "bounds nothing" from "bound did not fire".
     const s = outputSarif('<script>alert(1)</script>')
     expect(s.runs[0].invocations[0].toolExecutionNotifications).toBeUndefined()
+    expect(s.runs[0].properties!.appliedCap).toBe(SNIPPET_MAX_CHARS)
   })
 
   it('narrows the region to what it can vouch for if scannedText does not match', () => {
