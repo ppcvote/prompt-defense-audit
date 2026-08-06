@@ -46,10 +46,19 @@ jobs:
       # package.json means one of the two is wrong and neither should ship.
       # Cheap to check here, expensive to discover after an unpublishable
       # version is already on the registry.
+      #
+      # This also covers manual re-runs, which is the case that needs the
+      # clearer message: `workflow_dispatch` lets you pick any ref, and a
+      # branch has no version to agree with. Re-running a release means
+      # dispatching from its tag.
       - name: Verify tag matches package.json version
         run: |
-          tag="${GITHUB_REF_NAME#v}"
           pkg="$(node -p "require('./package.json').version")"
+          if [ "${GITHUB_REF_TYPE}" != "tag" ]; then
+            echo "::error::this workflow publishes a tagged release, but it ran on ${GITHUB_REF_TYPE} '${GITHUB_REF_NAME}'. Re-run it selecting a tag, e.g. v${pkg}."
+            exit 1
+          fi
+          tag="${GITHUB_REF_NAME#v}"
           if [ "$tag" != "$pkg" ]; then
             echo "::error::tag ${GITHUB_REF_NAME} declares ${tag} but package.json says ${pkg}"
             exit 1
