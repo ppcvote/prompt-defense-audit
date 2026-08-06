@@ -34,6 +34,30 @@ const TOOL_URI = 'https://github.com/ppcvote/prompt-defense-audit'
 const TRACKING_ISSUE = 'https://github.com/ppcvote/prompt-defense-audit/issues/1'
 const DRAFT_PREFIX = 'DRAFT-pda-'
 
+/**
+ * Where each scan mode documents how its results should be read, and in
+ * particular what a clean run does and does not claim.
+ *
+ * Why this is a run-level pointer rather than rule-level `helpUri`/`help`:
+ * only rules that actually fired appear in `tool.driver.rules`, so a clean run
+ * carries zero rule objects. A caveat attached to a rule is therefore absent
+ * from exactly the report that needs it most — the one with no findings, which
+ * a consumer is most likely to read as an all-clear.
+ *
+ * Why not `tool.driver.informationUri`: that is defined as information about
+ * the tool (SARIF 2.1.0 §3.19.3) and consumers commonly render it as a project
+ * homepage link. Pointing it at a caveat section would make it mean something
+ * narrower than the spec says, and would lose the homepage it currently gives.
+ *
+ * Anchors verified against GitHub's rendered README rather than derived from
+ * the heading text, since the slug rules are not obvious ("Output scanning
+ * (`--output`)" renders as `output-scanning---output`).
+ */
+const INTERPRETATION_URI = {
+  output: `${TOOL_URI}#output-scanning---output`,
+  audit: `${TOOL_URI}#what-this-scanner-does-not-catch`,
+} as const
+
 /** SARIF result level. */
 export type SarifLevel = 'error' | 'warning' | 'note' | 'none'
 
@@ -132,8 +156,19 @@ export interface SarifRun {
    * no cap declared and no notification says "this emitter bounds nothing",
    * which is a different claim from "a bound exists and did not fire today".
    * Carrying both keys only in the notification would collapse those two.
+   *
+   * `interpretationUri` points at where this tool states how its results
+   * should be read — specifically, that a clean scan is a lower bound rather
+   * than a coverage claim. It is a pointer, not a declaration: it asserts
+   * nothing about coverage, so unlike a completeness field it cannot misstate
+   * coverage. See the note on SNIPPET_MAX_CHARS' sibling constant below for
+   * why this cannot live on a rule.
+   *
+   * The spelling is this emitter's choice and is not a ratified key. The
+   * behaviour being demonstrated is that the pointer travels with the run;
+   * rename it freely if the RFC settles on something else.
    */
-  properties?: { appliedCap?: number }
+  properties?: { appliedCap?: number; interpretationUri?: string }
 }
 
 export interface SarifLog {
@@ -416,7 +451,10 @@ export function outputScanToSarif(
         // Declared on every run, fired or not: a consumer must be able to tell
         // "this emitter bounds snippet text at 4096" from "this emitter bounds
         // nothing", and absence of a notification alone cannot say which.
-        properties: { appliedCap: SNIPPET_MAX_CHARS },
+        properties: {
+          appliedCap: SNIPPET_MAX_CHARS,
+          interpretationUri: INTERPRETATION_URI.output,
+        },
       },
     ],
   }
@@ -476,6 +514,11 @@ export function auditToSarif(
           { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
         ],
         results,
+        // No appliedCap here: the prompt audit reproduces no matched text, so
+        // it has no snippet bound to declare. The interpretation pointer still
+        // applies — a grade is presence of defensive language, not proof that
+        // any of it is enforced, and the linked section says so.
+        properties: { interpretationUri: INTERPRETATION_URI.audit },
       },
     ],
   }

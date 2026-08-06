@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added — `run.properties.interpretationUri`
+
+A run-level pointer to where this tool states how its results should be read,
+and specifically what a clean run does and does not claim. Emitted on every
+run, on both scan modes, each pointing at its own caveat section.
+
+This is a pointer, not a completeness declaration. It asserts nothing about
+coverage, so unlike a field trying to quantify a detector's blind spot it
+cannot misstate coverage. The distinction is the one drawn in
+[claude-code-skill-security-check#24](https://github.com/aliksir/claude-code-skill-security-check/issues/24):
+a bound that lives inside a pattern cannot be declared by the report that
+pattern produces, but the report can say where the caveat is written down.
+
+Why run level rather than a rule's `helpUri` or `help`: only rules that
+actually fired appear in `tool.driver.rules`, so a clean run carries **zero**
+rule objects. A caveat attached to a rule is missing from precisely the report
+most likely to be read as an all-clear. Pinned by a test.
+
+Why not `tool.driver.informationUri`: SARIF 2.1.0 §3.19.3 defines that as
+information about the tool, and consumers commonly render it as a project
+homepage link. Repointing it at a caveat section would narrow its meaning and
+cost the homepage.
+
+The key name is this emitter's spelling and is not ratified. What is being
+demonstrated is that the pointer travels with the run; rename freely if the
+RFC settles elsewhere.
+
 ## [1.7.0] - 2026-08-06
 
 ### Fixed — SARIF regions understated the extent of long payloads

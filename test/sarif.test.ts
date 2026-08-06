@@ -441,3 +441,56 @@ describe('region describes the full matched extent', () => {
     expect(region.snippet?.text).toBe(scan.threats[0].match)
   })
 })
+
+// ─── interpretation pointer ───────────────────────────────────────────────
+//
+// A pointer to where the tool states how its results should be read. It is
+// deliberately not a completeness field: it asserts nothing about coverage, so
+// it cannot misstate coverage, which is the trap any 3b-style declaration
+// falls into (aliksir/claude-code-skill-security-check#24).
+//
+// The load-bearing case is the clean run. It carries no results and therefore
+// no rules, so anything hung off a rule is absent from the one report a
+// consumer is most likely to read as an all-clear.
+
+describe('run.properties.interpretationUri', () => {
+  it('is present on a clean output scan, which has no rules to hang it on', () => {
+    const s = outputSarif('hello world')
+    const run = s.runs[0]
+    expect(run.results).toHaveLength(0)
+    expect(run.tool.driver.rules).toHaveLength(0)
+    expect(run.properties?.interpretationUri).toBeTruthy()
+  })
+
+  it('is present when the scan does find something', () => {
+    // Unconditional for the same reason appliedCap is: if it appeared only on
+    // clean runs its absence would be ambiguous, and a run with one finding
+    // may still have missed three.
+    const s = outputSarif('<script>alert(1)</script>')
+    expect(s.runs[0].results.length).toBeGreaterThan(0)
+    expect(s.runs[0].properties?.interpretationUri).toBeTruthy()
+  })
+
+  it('points each scan mode at its own caveat section', () => {
+    const output = outputSarif('hello world').runs[0].properties?.interpretationUri
+    const audit = auditToSarif(auditWithDetails('You are a bot'), {
+      scannedText: 'You are a bot',
+    }).runs[0].properties?.interpretationUri
+    expect(output).not.toBe(audit)
+    for (const uri of [output, audit]) {
+      // A bare repo URL would land a reader on the README with no idea which
+      // paragraph was meant, so the fragment is the point of the pointer.
+      expect(uri).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+#.+/)
+    }
+  })
+
+  it('does not declare a snippet cap on the prompt-audit path', () => {
+    // That path reproduces no matched text, so it has no snippet bound. A cap
+    // declared there would claim a bound that does not exist.
+    const s = auditToSarif(auditWithDetails('You are a bot'), {
+      scannedText: 'You are a bot',
+    })
+    expect(s.runs[0].properties?.appliedCap).toBeUndefined()
+    expect(s.runs[0].properties?.interpretationUri).toBeTruthy()
+  })
+})
