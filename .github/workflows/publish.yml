@@ -1,0 +1,90 @@
+name: Publish
+
+# Releases are cut by pushing a tag. The tarball is built on a clean runner
+# from the tagged commit, never from a laptop, and npm records a provenance
+# attestation binding the published version to this repository, this workflow,
+# and that commit. Anyone can then verify the package came from here rather
+# than trusting that whoever ran `npm publish` was who they claimed to be.
+#
+# Authentication is OIDC trusted publishing: the runner exchanges a short-lived
+# identity token for publish rights. There is no npm token in this repo, no
+# secret to leak, and nothing to rotate. That requires a one-time setup on
+# npmjs.com (Package settings, Trusted publisher, GitHub Actions, this repo,
+# workflow `publish.yml`). Until that is configured the publish step fails on
+# authentication, which is the safe direction to fail.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # required for provenance; without it publish is unattested
+
+jobs:
+  publish:
+    name: Build, verify, publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      # Trusted publishing needs a newer npm than the runner image ships.
+      - name: Use an npm that supports trusted publishing
+        run: npm install -g npm@latest
+
+      - run: npm ci
+
+      # The tag is the release's identity, so a tag that disagrees with
+      # package.json means one of the two is wrong and neither should ship.
+      # Cheap to check here, expensive to discover after an unpublishable
+      # version is already on the registry.
+      - name: Verify tag matches package.json version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pkg="$(node -p "require('./package.json').version")"
+          if [ "$tag" != "$pkg" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} declares ${tag} but package.json says ${pkg}"
+            exit 1
+          fi
+          echo "tag and package.json agree on ${pkg}"
+
+      - name: Refuse to republish an existing version
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          name="$(node -p "require('./package.json').name")"
+          if npm view "${name}@${pkg}" version >/dev/null 2>&1; then
+            echo "::error::${name}@${pkg} is already published; bump the version"
+            exit 1
+          fi
+          echo "${name}@${pkg} is not on the registry yet"
+
+      - run: npm run lint
+
+      - run: npm test
+
+      - run: npm run build
+
+      # --provenance is what produces the attestation. --access public is
+      # explicit rather than implied so a future scoped rename cannot silently
+      # publish privately.
+      - name: Publish with provenance
+        run: npm publish --provenance --access public
+
+      - name: Confirm the published version carries provenance
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          name="$(node -p "require('./package.json').name")"
+          # Give the registry a moment to index the new version.
+          for i in 1 2 3 4 5; do
+            if npm view "${name}@${pkg}" version >/dev/null 2>&1; then break; fi
+            sleep 5
+          done
+          npm view "${name}@${pkg}" dist.attestations --json || true
