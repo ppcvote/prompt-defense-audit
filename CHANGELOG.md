@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.7.0] - 2026-08-06
 
 ### Fixed — SARIF regions understated the extent of long payloads
 
@@ -26,15 +26,56 @@ consistent and externally wrong, which is the harder kind to notice.
 - Above `SNIPPET_MAX_CHARS` (4096) the snippet is **omitted rather than
   shortened**, because a snippet covering less than its own region is an
   incomplete answer shaped like a complete one. The omission is declared in
-  `invocations[].toolExecutionNotifications` at `warning` level with
-  `appliedCap` and `droppedCount` — the cap alongside the count, since a count
-  without its bound cannot distinguish 1-of-2 from 1-of-2000.
+  `invocations[].toolExecutionNotifications` at `warning` level.
   `executionSuccessful` stays `true`: the analysis completed, only the
   reproduced text was bounded.
 
-The `appliedCap` / `droppedCount` pairing follows the convention being settled
-in OWASP/www-project-agentic-skills-top-10#49, so two independent emitters use
-the same names.
+### Changed — `appliedCap` moved to `run.properties`
+
+**Consumers reading `appliedCap` from the notification must update.** The
+envelope RFC ratified a split on 2026-08-05
+([claude-code-skill-security-check#24](https://github.com/aliksir/claude-code-skill-security-check/issues/24));
+this emitter previously carried both keys in the notification, which is the
+shape that was rejected.
+
+- `run.properties.appliedCap` — the bound. Configuration, true for the whole
+  run, so it is declared **whether or not it fired**.
+- `toolExecutionNotifications[].properties.droppedCount` — the event. Emitted
+  only once something is actually withheld, and no longer duplicating the cap.
+
+Why the cap is unconditional: emitted only on a drop, a run that bounds nothing
+would be byte-identical to a run whose bound did not bite, leaving silence
+ambiguous between the two. Declaring it always makes the silence mean something.
+
+### Fixed — tool-call argument injection missed ordinary phrasings
+
+`tool-arg-injection` allowed at most three words between the directive and
+`instructions`. Four or more and the rule did not fire, so `ignore all prior
+system and developer instructions` was reported clean while `ignore all
+previous instructions` was flagged `high`. Two verbs common in real payloads,
+`forget` and `override`, were not in the rule at all.
+
+- The span is now counted in characters (`{0,48}`, lazy), which is also robust
+  to punctuation and hyphenation in a way word counting is not.
+- Verb set gains `forget`, `override`, `bypass`, `discard`; anchor set gains
+  `earlier` and `preceding`.
+- Measured in both directions rather than assumed: recall on a corpus of natural
+  phrasings went 6/11 → 11/11, false positives unchanged at 0/8 on benign text
+  sharing the same vocabulary. The anchor-word requirement is what keeps the
+  wider span affordable — the verb alone cannot match, so "users often forget
+  their password" stays clean.
+- The bounded span excludes the quote delimiting the JSON value, so it cannot
+  backtrack; a 100 KB non-matching argument scans in under 1 ms, pinned by a
+  test.
+
+**This can change CI outcomes.** Input that previously passed may now be
+flagged, which is why this is a minor bump rather than a patch: per the catalog
+versioning contract, changing what an existing rule ID matches moves scores.
+
+Closing this gap does not close the class. A bound that lives inside a pattern
+cannot be declared by the report that pattern produces, so a clean output scan
+remains a lower bound — now stated explicitly in the README under "Output
+scanning".
 
 ## [1.6.0] - 2026-07-20
 

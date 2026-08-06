@@ -279,14 +279,36 @@ const THREAT_RULES: ThreatRule[] = [
     description: 'Markdown link with obfuscated javascript: protocol',
   },
 
-  // ── Tool-call argument injection (v1.5) ──
+  // ── Tool-call argument injection (v1.5, gap widened v1.7.0) ──
   // Function-call arguments can carry injection payloads. Specifically watch
   // for known PI seed phrases inside any JSON value that looks like a tool arg.
+  //
+  // The directive-to-noun span was previously counted in words, `{0,3}`, which
+  // let ordinary phrasings through: "ignore all prior system and developer
+  // instructions" puts four words between the anchor and the noun and did not
+  // fire, while "ignore all previous instructions" did. Measured recall on a
+  // corpus of natural phrasings was 6/11. Counting characters instead of words
+  // is also robust to punctuation and hyphenation, which word counting is not.
+  // The verb set gained `forget` and `override`, both of which appear in common
+  // payloads and neither of which the rule recognised at all.
+  //
+  // Widening a detector trades recall against false positives, so this was
+  // measured in both directions rather than assumed: recall 6/11 → 11/11 with
+  // false positives unchanged at 0/8 on a benign corpus that deliberately
+  // shares vocabulary ("the compiler will ignore all unreachable code",
+  // "please follow all previous instructions carefully"). The anchor-word
+  // requirement is what holds the false-positive rate down: the verb alone is
+  // not enough, so "users often forget their password" cannot match.
+  //
+  // This narrows one blind spot; it does not remove the class. A bound that
+  // lives inside a pattern cannot be declared in the report that pattern
+  // produces, so a clean result remains a lower bound. See README, "What this
+  // measures, and what it does not".
   {
     id: 'tool-arg-injection',
     name: 'Tool Call Argument Injection',
     severity: 'high',
-    pattern: /"(?:url|query|prompt|message|input|content|text|body|search|q)"\s*:\s*"[^"]*(?:ignore\s+(?:all|any|every|the|previous|prior|prior\s+\w+|above)(?:\s+\w+){0,3}\s*instructions?|you\s+are\s+now\s+(?:DAN|free|unrestricted|jailbroken)|system\s*:\s*you\s+are|disregard\s+(?:everything|the\s+above|prior|previous|all))[^"]*"/gi,
+    pattern: /"(?:url|query|prompt|message|input|content|text|body|search|q)"\s*:\s*"[^"]*(?:(?:ignore|disregard|forget|override|bypass|discard)\s+(?:all|any|every|the|previous|prior|above|earlier|preceding)[^"]{0,48}?instructions?|you\s+are\s+now\s+(?:DAN|free|unrestricted|jailbroken)|system\s*:\s*you\s+are|disregard\s+(?:everything|the\s+above|prior|previous|all))[^"]*"/gi,
     description: 'Tool-call argument contains classic prompt-injection seed phrase',
   },
 
