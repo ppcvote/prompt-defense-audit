@@ -478,9 +478,13 @@ describe('run.properties.interpretationUri', () => {
     }).runs[0].properties?.interpretationUri
     expect(output).not.toBe(audit)
     for (const uri of [output, audit]) {
-      // A bare repo URL would land a reader on the README with no idea which
-      // paragraph was meant, so the fragment is the point of the pointer.
-      expect(uri).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+#.+/)
+      // Assert what has to hold, not the path shape: a GitHub URL carrying a
+      // non-empty fragment. A bare repo URL would land a reader on the README
+      // with no idea which paragraph was meant, so the fragment is the point
+      // of the pointer. Whether the path is pinned to a tag depends on the
+      // version, which the pinning tests below cover separately.
+      expect(uri).toMatch(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\//)
+      expect(uri).toMatch(/#[^#]+$/)
     }
   })
 
@@ -492,5 +496,34 @@ describe('run.properties.interpretationUri', () => {
     })
     expect(s.runs[0].properties?.appliedCap).toBeUndefined()
     expect(s.runs[0].properties?.interpretationUri).toBeTruthy()
+  })
+})
+
+describe('interpretationUri is pinned to the release that wrote the run', () => {
+  const uriFor = (version: string) =>
+    outputScanToSarif(scanOutput('hello world'), {
+      scannedText: 'hello world',
+      toolVersion: version,
+    }).runs[0].properties!.interpretationUri!
+
+  it('pins a release version to its tag', () => {
+    // A SARIF file outlives the version that wrote it. Pointing at the default
+    // branch would silently re-target as the README changes, so a consumer
+    // reading an old artifact would get today's caveat, not the one that
+    // applied to the run in front of them.
+    expect(uriFor('1.7.0')).toContain('/blob/v1.7.0/README.md#')
+    expect(uriFor('2.0.0')).toContain('/blob/v2.0.0/README.md#')
+  })
+
+  it('falls back to the default branch when there is no release tag to pin to', () => {
+    // 0.0.0 is the sentinel for an unreadable package.json, and a prerelease
+    // has no matching tag. A link to a tag that does not exist is worse than
+    // an unpinned one.
+    expect(uriFor('0.0.0')).toContain('/blob/master/README.md#')
+    expect(uriFor('1.8.0-beta.1')).toContain('/blob/master/README.md#')
+  })
+
+  it('keeps the fragment, which is the part that makes it a pointer', () => {
+    expect(uriFor('1.7.0')).toMatch(/#[a-z0-9-]+$/)
   })
 })

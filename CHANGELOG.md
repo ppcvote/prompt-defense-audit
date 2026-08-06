@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.8.0] - 2026-08-07
 
 ### Added — `run.properties.interpretationUri`
 
@@ -29,9 +29,29 @@ information about the tool, and consumers commonly render it as a project
 homepage link. Repointing it at a caveat section would narrow its meaning and
 cost the homepage.
 
+The pointer is **pinned to the release that wrote the run**
+(`/blob/v1.8.0/README.md#…`). A SARIF file outlives the version that produced
+it, so an unpinned pointer silently re-targets every time the README changes
+and hands a consumer today's caveat for a two-year-old artifact. Falls back to
+the default branch for a non-release version, since a link to a tag that does
+not exist is worse than an unpinned one.
+
+Anchors are read from GitHub's rendered README rather than derived from heading
+text: `Output scanning (\`--output\`)` renders as `output-scanning---output`,
+which is not guessable.
+
 The key name is this emitter's spelling and is not ratified. What is being
 demonstrated is that the pointer travels with the run; rename freely if the
 RFC settles elsewhere.
+
+### Changed — releases now publish from CI with provenance
+
+`npm publish` no longer runs on a laptop. Pushing a `v*` tag builds on a clean
+runner from the tagged commit and publishes with an npm provenance attestation
+binding the version to this repository, workflow, and commit. Authentication is
+OIDC trusted publishing, so no npm token exists in the repo. Guards refuse a
+tag that disagrees with `package.json` and refuse to republish an existing
+version.
 
 ## [1.7.0] - 2026-08-06
 

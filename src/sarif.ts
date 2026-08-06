@@ -53,10 +53,30 @@ const DRAFT_PREFIX = 'DRAFT-pda-'
  * the heading text, since the slug rules are not obvious ("Output scanning
  * (`--output`)" renders as `output-scanning---output`).
  */
-const INTERPRETATION_URI = {
-  output: `${TOOL_URI}#output-scanning---output`,
-  audit: `${TOOL_URI}#what-this-scanner-does-not-catch`,
+const INTERPRETATION_ANCHOR = {
+  output: 'output-scanning---output',
+  audit: 'what-this-scanner-does-not-catch',
 } as const
+
+/**
+ * Build the pointer, pinned to the release that produced the run.
+ *
+ * Pinning is the point. A SARIF file outlives the version that wrote it, and a
+ * consumer reading a two-year-old artifact needs the caveat as it stood for
+ * *that* version, not as it reads on the default branch today. An unpinned
+ * pointer silently re-targets every time the README changes, which turns a
+ * durable reference into a live one and defeats the reason for carrying it.
+ *
+ * Falls back to the default branch when the version is not a release version
+ * (the `0.0.0` sentinel used when package.json cannot be read, or a
+ * prerelease). A link to the wrong revision is worse than useless, but a link
+ * to a tag that does not exist is worse still, so the unpinned form is the
+ * safer degradation.
+ */
+function interpretationUri(mode: keyof typeof INTERPRETATION_ANCHOR, version: string): string {
+  const ref = /^\d+\.\d+\.\d+$/.test(version) && version !== '0.0.0' ? `v${version}` : 'master'
+  return `${TOOL_URI}/blob/${ref}/README.md#${INTERPRETATION_ANCHOR[mode]}`
+}
 
 /** SARIF result level. */
 export type SarifLevel = 'error' | 'warning' | 'note' | 'none'
@@ -453,7 +473,7 @@ export function outputScanToSarif(
         // nothing", and absence of a notification alone cannot say which.
         properties: {
           appliedCap: SNIPPET_MAX_CHARS,
-          interpretationUri: INTERPRETATION_URI.output,
+          interpretationUri: interpretationUri('output', version),
         },
       },
     ],
@@ -518,7 +538,7 @@ export function auditToSarif(
         // it has no snippet bound to declare. The interpretation pointer still
         // applies — a grade is presence of defensive language, not proof that
         // any of it is enforced, and the linked section says so.
-        properties: { interpretationUri: INTERPRETATION_URI.audit },
+        properties: { interpretationUri: interpretationUri('audit', version) },
       },
     ],
   }
