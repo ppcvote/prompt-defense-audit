@@ -30,15 +30,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Deliberately no `registry-url`. It makes setup-node write an .npmrc
+      # containing `//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}`, and
+      # with no token in the environment that expands to an empty credential.
+      # npm then presents the empty token, the registry rejects it, and OIDC is
+      # never attempted — the first run failed exactly this way, with a 404 on
+      # PUT and not one mention of oidc/trusted/provenance anywhere in the log.
+      # npm defaults to registry.npmjs.org, so nothing is lost by omitting it.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
           cache: npm
 
       # Trusted publishing needs a newer npm than the runner image ships.
       - name: Use an npm that supports trusted publishing
         run: npm install -g npm@latest
+
+      # Cheap to print, and the first thing worth knowing if publish fails on
+      # auth again: whether npm is new enough, and whether the OIDC token
+      # endpoint was actually injected into the job.
+      - name: Report the publishing environment
+        run: |
+          echo "npm $(npm --version), node $(node --version)"
+          if [ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]; then
+            echo "OIDC token endpoint present (id-token permission is in effect)"
+          else
+            echo "::warning::no OIDC token endpoint in this job; trusted publishing cannot work"
+          fi
+          echo "npmrc files npm will read:"
+          npm config ls -l 2>/dev/null | grep -E "^; .*npmrc|^userconfig|^globalconfig" || true
 
       - run: npm ci
 
