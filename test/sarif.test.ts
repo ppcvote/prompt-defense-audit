@@ -14,7 +14,13 @@ const HEX64 = /^[a-f0-9]{64}$/
 // ─── helpers ──────────────────────────────────────────────────────────────
 
 function outputSarif(text: string, opts = {}) {
-  return outputScanToSarif(scanOutput(text), { scannedText: text, ...opts })
+  // Models a released build. The unpinnable path (no toolVersion, or the
+  // 0.0.0 sentinel) is exercised explicitly by the pointer tests below.
+  return outputScanToSarif(scanOutput(text), {
+    scannedText: text,
+    toolVersion: '1.7.0',
+    ...opts,
+  })
 }
 
 // ─── sha256Hex + draftRuleId units ──────────────────────────────────────────
@@ -475,6 +481,7 @@ describe('run.properties.interpretationUri', () => {
     const output = outputSarif('hello world').runs[0].properties?.interpretationUri
     const audit = auditToSarif(auditWithDetails('You are a bot'), {
       scannedText: 'You are a bot',
+      toolVersion: '1.7.0',
     }).runs[0].properties?.interpretationUri
     expect(output).not.toBe(audit)
     for (const uri of [output, audit]) {
@@ -493,6 +500,7 @@ describe('run.properties.interpretationUri', () => {
     // declared there would claim a bound that does not exist.
     const s = auditToSarif(auditWithDetails('You are a bot'), {
       scannedText: 'You are a bot',
+      toolVersion: '1.7.0',
     })
     expect(s.runs[0].properties?.appliedCap).toBeUndefined()
     expect(s.runs[0].properties?.interpretationUri).toBeTruthy()
@@ -515,12 +523,76 @@ describe('interpretationUri is pinned to the release that wrote the run', () => 
     expect(uriFor('2.0.0')).toContain('/blob/v2.0.0/README.md#')
   })
 
-  it('falls back to the default branch when there is no release tag to pin to', () => {
+  it('omits the pointer when there is no release tag to pin to', () => {
     // 0.0.0 is the sentinel for an unreadable package.json, and a prerelease
-    // has no matching tag. A link to a tag that does not exist is worse than
-    // an unpinned one.
-    expect(uriFor('0.0.0')).toContain('/blob/master/README.md#')
-    expect(uriFor('1.8.0-beta.1')).toContain('/blob/master/README.md#')
+    // has no matching tag. This used to fall back to `/blob/master/`, on the
+    // reasoning that a dangling tag link would be worse — a false dichotomy:
+    // the alternative to a mutable pointer is no pointer. A `master` URL
+    // silently re-targets on every push, which is the failure mode the
+    // pinning above exists to prevent (ccssc#24 §5: absent beats mutable).
+    const unpinned = outputScanToSarif(scanOutput('hello world'), {
+      scannedText: 'hello world',
+      toolVersion: '0.0.0',
+    }).runs[0]
+    expect(unpinned.properties?.interpretationUri).toBeUndefined()
+    // The cap declaration survives: only the pointer is version-dependent.
+    expect(unpinned.properties?.appliedCap).toBe(4096)
+
+    const prerelease = outputScanToSarif(scanOutput('hello world'), {
+      scannedText: 'hello world',
+      toolVersion: '1.8.0-beta.1',
+    }).runs[0]
+    expect(prerelease.properties?.interpretationUri).toBeUndefined()
+
+    // Audit mode had nothing else in `properties`, so the object goes with it.
+    const audit = auditToSarif(auditWithDetails('You are a bot'), {
+      scannedText: 'You are a bot',
+      toolVersion: '0.0.0',
+    }).runs[0]
+    expect(audit.properties).toBeUndefined()
+  })
+
+  it('emits no URL anywhere that resolves through a mutable git ref', () => {
+    // The class, not the instance: walk every string in the emitted artifact,
+    // pinned build and unpinnable build, both modes. Nothing may point into
+    // /blob|tree|raw/(main|master|HEAD)/ — a reference through a branch name
+    // is a promise about the future of that branch.
+    const collect = (o: unknown, out: string[] = []): string[] => {
+      if (typeof o === 'string') out.push(o)
+      else if (o && typeof o === 'object')
+        for (const v of Object.values(o)) collect(v, out)
+      return out
+    }
+    const artifacts = [
+      outputSarif('<script>alert(1)</script>'),
+      outputSarif('hello world', { toolVersion: '0.0.0' }),
+      auditToSarif(auditWithDetails('You are a bot'), {
+        scannedText: 'You are a bot',
+        toolVersion: '1.7.0',
+      }),
+      auditToSarif(auditWithDetails('You are a bot'), {
+        scannedText: 'You are a bot',
+        toolVersion: '0.0.0',
+      }),
+    ]
+    for (const artifact of artifacts) {
+      for (const value of collect(artifact)) {
+        expect(value).not.toMatch(/\/(blob|tree|raw)\/(main|master|HEAD)\//)
+      }
+    }
+  })
+
+  it('presence of the pointer depends on the build, never on the run outcome', () => {
+    // If a pinned build dropped the pointer on failure runs (or an unpinnable
+    // build emitted it on clean ones), presence would leak result state. Every
+    // artifact from one binary either carries it or none do.
+    const has = (text: string, toolVersion: string) =>
+      outputScanToSarif(scanOutput(text), { scannedText: text, toolVersion })
+        .runs[0].properties?.interpretationUri !== undefined
+    expect(has('hello world', '1.7.0')).toBe(has('<script>alert(1)</script>', '1.7.0'))
+    expect(has('hello world', '0.0.0')).toBe(has('<script>alert(1)</script>', '0.0.0'))
+    expect(has('hello world', '1.7.0')).toBe(true)
+    expect(has('hello world', '0.0.0')).toBe(false)
   })
 
   it('keeps the fragment, which is the part that makes it a pointer', () => {

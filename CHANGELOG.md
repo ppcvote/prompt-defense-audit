@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.8.1] - 2026-08-17
+
+### Fixed — unpinnable builds no longer emit a mutable `interpretationUri`
+
+A build with no release version to pin to (the `0.0.0` sentinel for an
+unreadable package.json, a prerelease, or a library caller that passed no
+`toolVersion`) used to fall back to `/blob/master/`. That is a pointer into a
+moving branch: it silently re-targets on every push, which is the exact
+failure mode pinning exists to prevent. The fallback's own comment argued a
+dangling tag link would be worse — a false dichotomy, since the alternative
+to a mutable pointer is no pointer.
+
+Such builds now omit the field (and on the audit path, the then-empty
+`properties` object). Released builds are unchanged: they pinned before and
+pin now. Presence of the field depends only on the version baked into the
+running build, never on the outcome of a run, so an artifact's pointer cannot
+leak result state.
+
+One removed test had been defending the defect — it asserted the `master`
+fallback fired. Replaced by three: omission on unpinnable builds, a walk over
+every string in emitted artifacts asserting nothing resolves through
+`/blob|tree|raw/(main|master|HEAD)/`, and presence being build-invariant.
+
+This is the emitter-side half of
+[claude-code-skill-security-check#24](https://github.com/aliksir/claude-code-skill-security-check/issues/24)
+§5 (Schema Reference Stability): absent beats mutable. The published npm
+package was never affected — `interpretationUri` first shipped in 1.8.0,
+which was tagged but not published; 1.7.0 and earlier do not carry the field.
+
 ## [1.8.0] - 2026-08-07
 
 ### Added — `run.properties.interpretationUri`

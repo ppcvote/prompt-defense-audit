@@ -67,15 +67,36 @@ const INTERPRETATION_ANCHOR = {
  * pointer silently re-targets every time the README changes, which turns a
  * durable reference into a live one and defeats the reason for carrying it.
  *
- * Falls back to the default branch when the version is not a release version
- * (the `0.0.0` sentinel used when package.json cannot be read, or a
- * prerelease). A link to the wrong revision is worse than useless, but a link
- * to a tag that does not exist is worse still, so the unpinned form is the
- * safer degradation.
+ * Returns undefined when the version is not a release version (the `0.0.0`
+ * sentinel used when package.json cannot be read, or a prerelease), and the
+ * callers omit the field. This used to fall back to `master`, reasoning that a
+ * dangling tag link would be worse — a false dichotomy: the alternative to a
+ * mutable pointer is no pointer at all. An absent reference is honest about
+ * what the build can promise; a `master` reference silently re-targets on
+ * every push.
+ *
+ * Whether the field is emitted depends only on the version baked into the
+ * running build, never on the outcome of a run, so presence cannot leak result
+ * state: every artifact from one binary either carries it or none do.
  */
-function interpretationUri(mode: keyof typeof INTERPRETATION_ANCHOR, version: string): string {
-  const ref = /^\d+\.\d+\.\d+$/.test(version) && version !== '0.0.0' ? `v${version}` : 'master'
-  return `${TOOL_URI}/blob/${ref}/README.md#${INTERPRETATION_ANCHOR[mode]}`
+function interpretationUri(
+  mode: keyof typeof INTERPRETATION_ANCHOR,
+  version: string,
+): string | undefined {
+  if (!/^\d+\.\d+\.\d+$/.test(version) || version === '0.0.0') return undefined
+  return `${TOOL_URI}/blob/v${version}/README.md#${INTERPRETATION_ANCHOR[mode]}`
+}
+
+/**
+ * `{ interpretationUri }` when the build can pin one, otherwise undefined,
+ * which spreads as a no-op so the key is omitted rather than set to undefined.
+ */
+function pointerProps(
+  mode: keyof typeof INTERPRETATION_ANCHOR,
+  version: string,
+): { interpretationUri: string } | undefined {
+  const uri = interpretationUri(mode, version)
+  return uri === undefined ? undefined : { interpretationUri: uri }
 }
 
 /** SARIF result level. */
@@ -471,9 +492,11 @@ export function outputScanToSarif(
         // Declared on every run, fired or not: a consumer must be able to tell
         // "this emitter bounds snippet text at 4096" from "this emitter bounds
         // nothing", and absence of a notification alone cannot say which.
+        // The interpretation pointer is spread so an unpinnable build omits
+        // the key rather than emitting a mutable reference.
         properties: {
           appliedCap: SNIPPET_MAX_CHARS,
-          interpretationUri: interpretationUri('output', version),
+          ...pointerProps('output', version),
         },
       },
     ],
@@ -522,6 +545,12 @@ export function auditToSarif(
     message: { text: `No defense detected against ${c.name}` },
   }))
 
+  // No appliedCap here: the prompt audit reproduces no matched text, so it
+  // has no snippet bound to declare. The interpretation pointer still applies
+  // — a grade is presence of defensive language, not proof that any of it is
+  // enforced, and the linked section says so. An unpinnable build omits
+  // `properties` entirely rather than carrying a mutable reference.
+  const pointer = pointerProps('audit', version)
   return {
     $schema: SARIF_SCHEMA_URI,
     version: '2.1.0',
@@ -534,11 +563,7 @@ export function auditToSarif(
           { location: { uri }, hashes: { 'sha-256': sha256Hex(digestSubject) } },
         ],
         results,
-        // No appliedCap here: the prompt audit reproduces no matched text, so
-        // it has no snippet bound to declare. The interpretation pointer still
-        // applies — a grade is presence of defensive language, not proof that
-        // any of it is enforced, and the linked section says so.
-        properties: { interpretationUri: interpretationUri('audit', version) },
+        ...(pointer && { properties: pointer }),
       },
     ],
   }
