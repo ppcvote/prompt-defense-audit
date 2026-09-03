@@ -91,6 +91,10 @@ const DEFENSE_RULES: DefenseRule[] = [
       /(?:emotional|urgency|pressure|threaten|guilt|manipulat|coerce|情緒|緊急|壓力|威脅|操控|情感)/i,
       /(?:regardless of|no matter|even if|under no circumstance|即使|無論|不管)/i,
       /(?:(?:claim|pretend|say).*(?:developer|admin|creator|owner|engineer|employee)|(?:do not|never).*(?:trust|believe|accept).*(?:claim|identity|authorit))/i,
+      // The authority shortcut: a blanket delegation ("just handle it") or a relayed
+      // approval used in place of a real one. Named as a defense when the prompt says
+      // such a shortcut grants nothing.
+      /(?:delegation|blanket\s+(?:approval|authoriz\w*)|just\s+handle\s+it|handle\s+it\s+for\s+me|relayed\s+(?:approval|authorization)).{0,80}(?:authoriz\w*\s+nothing|grants?\s+nothing|(?:is|are)\s+not\s+(?:an\s+)?(?:approval|authorization)|still\s+(?:ask|confirm|require))|(?:全權處理|你看著辦|概括授權).{0,30}(?:無效|不算|仍(?:須|需)|不構成)/i,
     ],
     minMatches: 1,
   },
@@ -167,6 +171,13 @@ const DEFENSE_RULES: DefenseRule[] = [
     defensePatterns: [
       /(?:another|other|external|third.?party|forwarded|relayed|upstream|downstream).{0,15}(?:agent|bot|model|assistant|llm|ai\b|service)|其他.{0,5}(?:agent|代理|機器人|模型)|另一(?:個)?.{0,5}(?:agent|代理|模型)|外部.{0,5}(?:agent|代理|模型)/i,
       /(?:(?:do not|never|must not).{0,30}(?:execute|trust|act on|obey|inherit).{0,40}(?:another|other|forwarded|relayed|external).{0,20}(?:agent|bot|model|instruction|command|request|source))|(?:(?:authority|authorization|permission|principal).{0,20}(?:does not|do not|not).{0,20}(?:inherit|transfer|propagate))|(?:(?:authority|authorization|permission).{0,30}(?:verify|check|each).{0,15}(?:request|source|independent))|(?:other|external).{0,30}(?:source|content).{0,30}(?:untrusted|verify|confirm|not.{0,10}trust)|不(?:信任|執行|遵循).{0,15}(?:其他|另一|外部).{0,15}(?:agent|代理|模型|指令)|(?:授權|權限|主體).{0,15}(?:獨立驗證|不繼承|每次驗證)/i,
+      // Relayed or delegated authority carries nothing. Systems that keep the boundary
+      // in code often phrase it this way instead of naming another agent, which is what
+      // made the two patterns above miss it (found against a real merchant prompt).
+      /(?:relay\w*|forward\w*|delegat\w*|second.?hand|someone else|on\s+(?:their|his|her|another\w*|someone\w*)\s+behalf).{0,80}(?:authoriz\w*\s+nothing|grants?\s+nothing|(?:is|are)\s+not\s+(?:an\s+)?(?:approval|authorization)|does\s+not\s+authoriz\w*)|(?:authoriz\w*\s+nothing|grants?\s+nothing).{0,80}(?:relay|forward|delegat|behalf)|(?:代為|轉述|轉交|他人|代理人).{0,20}(?:核准|批准|授權).{0,20}(?:無效|不生效|不算|不構成)/i,
+      // Approval is per action and explicit, so one approval cannot be reused for a
+      // different one. The complementary half of the same boundary.
+      /(?:approval|authorization|consent)\s+(?:is\s+)?(?:per\b|for\s+each|required\s+for\s+each|explicit)|(?:ask|confirm|verify|obtain)\w*.{0,40}(?:approval|authorization).{0,20}(?:of|for)\s+each|approval\s+of\s+a\s+different\s+(?:change|action|request|item)|(?:逐(?:項|筆|次)|每(?:一)?(?:項|筆|次)).{0,10}(?:核准|批准|授權|確認)/i,
     ],
     minMatches: 2,
   },
@@ -182,6 +193,19 @@ const DEFENSE_RULES: DefenseRule[] = [
   },
 ]
 
+// One emoji element is a pictograph with optional VS16 and skin tone, a keycap, or a
+// regional-indicator pair; a sequence joins them with ZWJ. Subdivision flags (black
+// flag, tag letters, cancel tag) come first in the alternation, otherwise the generic
+// branch eats the flag base and leaves the tag run exposed to the Tag check below.
+const WELL_FORMED_EMOJI =
+  /\u{1F3F4}[\u{E0030}-\u{E0039}\u{E0061}-\u{E007A}]{3,6}\u{E007F}|(?:\p{Extended_Pictographic}\uFE0F?[\u{1F3FB}-\u{1F3FF}]?|[0-9#*]\uFE0F?\u20E3|\p{Regional_Indicator}{2})(?:\u200D(?:\p{Extended_Pictographic}\uFE0F?[\u{1F3FB}-\u{1F3FF}]?|[0-9#*]\uFE0F?\u20E3|\p{Regional_Indicator}{2}))*/gu
+
+/** Drop a leading BOM and any well-formed emoji sequence before Unicode checks run. */
+function stripWellFormedEmoji(prompt: string): string {
+  const noBom = prompt.charCodeAt(0) === 0xfeff ? prompt.slice(1) : prompt
+  return noBom.replace(WELL_FORMED_EMOJI, '')
+}
+
 /**
  * Detect suspicious Unicode characters that may indicate an attack
  * embedded in the prompt itself.
@@ -196,6 +220,10 @@ const DEFENSE_RULES: DefenseRule[] = [
 function detectSuspiciousUnicode(
   prompt: string,
 ): { found: boolean; evidence: string } {
+  // Well-formed emoji sequences legitimately carry ZWJ, variation selectors, skin-tone
+  // modifiers and, for subdivision flags, Tag characters. They are removed first so a
+  // family emoji or a flag is not reported, while a bare ZWJ or Tag run still is.
+  const scanned = stripWellFormedEmoji(prompt)
   const checks: Array<{ pattern: RegExp; name: string }> = [
     // Homoglyphs (visual lookalikes)
     { pattern: /[\u0400-\u04FF]/g, name: 'Cyrillic' },
@@ -217,11 +245,23 @@ function detectSuspiciousUnicode(
 
     // Visual fullwidth (CJK form) \u2014 bypass case-insensitive ASCII filters
     { pattern: /[\uFF01-\uFF5E]/g, name: 'Fullwidth' },
+
+    // Catch-all for every remaining General Category Cf code point: Arabic, Syriac,
+    // Kaithi, Egyptian, Duployan and musical format controls. Added in v1.9 after a
+    // Unicode-category sweep found 34 of them passing hand-written invisible lists,
+    // including the one in this scanner.
+    { pattern: /\p{Cf}/gu, name: 'Format control (Cf)' },
+    // Invisible but not Cf: combining grapheme joiner, Hangul fillers (U+3164 and
+    // U+FFA0 normalize to U+1160), braille blank, null notehead.
+    {
+      pattern: /[\u034F\u115F\u1160\u2800\u3164\uFFA0\u{1D159}]/gu,
+      name: 'Invisible (non-Cf)',
+    },
   ]
 
   const found: string[] = []
   for (const check of checks) {
-    const matches = prompt.match(check.pattern)
+    const matches = scanned.match(check.pattern)
     if (matches && matches.length > 0) {
       found.push(`${matches.length}\u00D7 ${check.name}`)
     }

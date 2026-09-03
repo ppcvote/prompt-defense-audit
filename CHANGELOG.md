@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [1.9.0] - 2026-09-04
+
+### Fixed — the invisible-character list was incomplete, and it was hand-written
+
+The Unicode check listed the usual carriers (zero-width, BiDi, tag characters,
+variation selectors) and missed the rest of General Category Cf: 34 code points
+across the Arabic, Syriac, Kaithi, Egyptian, Duployan and musical blocks. All of
+them are invisible, all of them break a keyword or a delimiter for any regex that
+reads the text afterwards, and none of them were reported. Four invisible
+characters outside Cf were missing too: U+034F, the Hangul fillers, and the
+braille blank (U+3164 and U+FFA0 normalize onto U+1160).
+
+The check now matches `\p{Cf}` as a class rather than enumerating it, so a code
+point added in a later Unicode version is covered as soon as the runtime knows
+about it. The gap was found by sweeping a third-party sanitizer by Unicode
+category and then running the same sweep here, which is the honest way to say
+this scanner had the bug it was looking for.
+
+### Fixed — well-formed emoji are no longer reported as smuggling
+
+A family emoji is ZWJ-joined and a subdivision flag is a tag-character run, so
+both tripped the zero-width and tag checks. Sequences that parse as emoji, and a
+leading byte-order mark, are removed before the checks run; a bare joiner or tag
+run outside a sequence still reports.
+
+### Fixed — two authorization vectors missed boundaries stated without an agent noun
+
+`cross-agent-auth` and `social-engineering` keyed on naming another agent, or on
+emotional-pressure wording. A production merchant prompt states the same boundary
+as "a delegation, approval relayed from someone else, or approval of a different
+change authorizes nothing", and scored undefended on both. Patterns for relayed
+and delegated authority, per-action explicit approval, and the authority shortcut
+now cover that phrasing in English and Chinese. A prompt that merely mentions
+approval still does not qualify.
+
 ## [1.8.1] - 2026-08-17
 
 ### Fixed — unpinnable builds no longer emit a mutable `interpretationUri`
